@@ -28,7 +28,10 @@
     <div class="container">
         <h1>{{ time }}</h1>
         <p>{{ date }}</p>
-        <p style="color: #00ff88;">{{ status }}</p>
+        <p>
+            <span style="display:inline-block;width:2rem;vertical-align:middle;">{% include "icons/" + weather.current_icon + ".svg" %}</span>
+            {{ weather.current.temperature }}°C &bull; {{ weather.current.wind_speed }} m/s &bull; {{ weather.current.humidity }}% RH
+        </p>
     </div>
     <div class="footer">Last Sync: {{ time }}</div>
 </body>

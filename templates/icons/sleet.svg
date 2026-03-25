@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M 8 36 Q 2 36 2 28 Q 2 20 10 20 Q 10 10 22 8 Q 34 6 38 16 Q 46 12 52 18 Q 58 20 56 28 Q 54 38 44 36 Z"/>
+  <!-- Rain line left -->
+  <line x1="18" y1="44" x2="14" y2="58"/>
+  <!-- Snowflake center -->
+  <line x1="32" y1="44" x2="32" y2="54"/>
+  <line x1="27" y1="49" x2="37" y2="49"/>
+  <line x1="28" y1="45" x2="36" y2="53"/>
+  <line x1="36" y1="45" x2="28" y2="53"/>
+  <!-- Rain line right -->
+  <line x1="46" y1="44" x2="42" y2="58"/>
+</svg>

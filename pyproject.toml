@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "fastapi>=0.135.2",
+    "httpx>=0.28.1",
     "jinja2>=3.1.6",
     "playwright>=1.58.0",
     "uvicorn>=0.42.0",
@@ -21,7 +22,10 @@ dev = [
 select = ["ALL"]
 ignore = [
     "D100",   # missing docstring in public module
+    "D101",   # missing docstring in public class
+    "D102",   # missing docstring in public method
     "D103",   # missing docstring in public function
+    "D105",   # missing docstring in magic method
     "D203",   # conflicts with D211
     "D213",   # conflicts with D212
     "ANN201", # missing return type annotation
