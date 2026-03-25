@@ -1,0 +1,30 @@
+[project]
+name = "everyday-screen"
+version = "0.1.0"
+description = "Backend renderer for a home hallway display screen"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.135.2",
+    "jinja2>=3.1.6",
+    "playwright>=1.58.0",
+    "uvicorn>=0.42.0",
+]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.5.1",
+    "ruff>=0.15.7",
+]
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "D100",   # missing docstring in public module
+    "D103",   # missing docstring in public function
+    "D203",   # conflicts with D211
+    "D213",   # conflicts with D212
+    "ANN201", # missing return type annotation
+    "T201",   # print statements
+    "COM812", # conflicts with ruff formatter
+]

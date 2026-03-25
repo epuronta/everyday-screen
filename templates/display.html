@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            margin: 0;
+            background: black;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        .container {
+            text-align: center;
+            border-left: 5px solid #00ff88;
+            padding: 2rem;
+        }
+        h1 { font-size: 8rem; margin: 0; }
+        p { font-size: 2rem; color: #888; }
+        .footer { position: fixed; bottom: 20px; font-size: 1rem; color: #444; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>{{ time }}</h1>
+        <p>{{ date }}</p>
+        <p style="color: #00ff88;">{{ status }}</p>
+    </div>
+    <div class="footer">Last Sync: {{ time }}</div>
+</body>
+</html>
