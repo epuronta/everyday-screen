@@ -6,10 +6,10 @@ install:
 	uv run pre-commit install
 
 run:
-	uv run uvicorn app:app --host 0.0.0.0 --port 8000 --reload --reload-include "*.html"
+	uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --reload-include "*.html"
 
 screenshot:
-	uv run python renderer.py
+	curl -s http://localhost:8000/display.png -o latest_display.png
 
 lint:
 	uv run ruff check .
