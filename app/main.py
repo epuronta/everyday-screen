@@ -1,3 +1,4 @@
+import os
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -12,7 +13,7 @@ from .weather import get_weather
 app = FastAPI()
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 
-PLACE = "Helsinki"
+PLACE = os.environ["FMI_CITY"]
 IMAGE_CACHE_TTL = timedelta(minutes=1)
 
 
