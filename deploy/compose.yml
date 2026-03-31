@@ -1,0 +1,26 @@
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    restart: unless-stopped
+    environment:
+      - FMI_CITY=${FMI_CITY}
+    labels:
+      # Opt into Traefik routing — without this Traefik ignores the container
+      - "traefik.enable=true"
+      # Route requests for this domain to this container
+      - "traefik.http.routers.everyday-screen.rule=Host(`${DOMAIN}`)"
+      # Traefik entrypoint name — must match the websecure entrypoint in the host Traefik config
+      - "traefik.http.routers.everyday-screen.entrypoints=websecure"
+      # Cert resolver name — must match the letsencrypt resolver in the host Traefik config
+      - "traefik.http.routers.everyday-screen.tls.certresolver=letsencrypt"
+      # Port uvicorn listens on inside the container
+      - "traefik.http.services.everyday-screen.loadbalancer.server.port=8000"
+    networks:
+      - traefik
+
+networks:
+  # Shared network the host Traefik container is attached to — must be created before deploying
+  traefik:
+    external: true
