@@ -4,15 +4,24 @@
     <style>
         body {
             margin: 0;
+            background: #222;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .display {
+            width: {{ width }}px;
+            height: {{ height }}px;
             background: black;
             color: white;
             font-family: 'Inter', sans-serif;
-            height: 100vh;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             overflow: hidden;
+            flex-shrink: 0;
         }
         .container {
             text-align: center;
@@ -21,22 +30,24 @@
         }
         h1 { font-size: 8rem; margin: 0; }
         p { font-size: 2rem; color: #888; }
-        .footer { position: fixed; bottom: 20px; font-size: 1rem; color: #444; }
+        .footer { position: absolute; bottom: 20px; font-size: 1rem; color: #444; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>{{ time }}</h1>
-        <p>{{ date }}</p>
-        <p>
-            <span style="display:inline-block;width:2rem;vertical-align:middle;">{% include "icons/" + weather.current_icon + ".svg" %}</span>
-            {{ weather.current.temperature }}°C &bull; {{ weather.current.wind_speed }} m/s &bull; {{ weather.current.humidity }}% RH
-        </p>
-        {% set spot = electricity.current(now) %}
-        {% if spot %}
-        <p>~{{ spot.price | round(0, 'ceil') | int }} c/kWh</p>
-        {% endif %}
+    <div class="display">
+        <div class="container">
+            <h1>{{ time }}</h1>
+            <p>{{ date }}</p>
+            <p>
+                <span style="display:inline-block;width:2rem;vertical-align:middle;">{% include "icons/" + weather.current_icon + ".svg" %}</span>
+                {{ weather.current.temperature }}°C &bull; {{ weather.current.wind_speed }} m/s &bull; {{ weather.current.humidity }}% RH
+            </p>
+            {% set spot = electricity.current(now) %}
+            {% if spot %}
+            <p>~{{ spot.price | round(0, 'ceil') | int }} c/kWh</p>
+            {% endif %}
+        </div>
+        <div class="footer">Last Sync: {{ time }}</div>
     </div>
-    <div class="footer">Last Sync: {{ time }}</div>
 </body>
 </html>

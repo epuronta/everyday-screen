@@ -3,13 +3,14 @@ import os
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from typing import Annotated
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Query, Request
 from fastapi.responses import Response
 from fastapi.templating import Jinja2Templates
 
 from .electricity import get_electricity
-from .renderer import render
+from .renderer import HEIGHT, WIDTH, render
 from .weather import get_weather
 
 app = FastAPI()
@@ -33,36 +34,50 @@ class _ImageCache:
 _image_cache = _ImageCache()
 
 
-def _build_context(now: datetime, weather: object, electricity: object) -> dict:
+def _build_context(
+    now: datetime, weather: object, electricity: object, width: int, height: int
+) -> dict:
     return {
         "time": now.astimezone().strftime("%H:%M"),
         "date": now.astimezone().strftime("%A, %b %d"),
         "weather": weather,
         "electricity": electricity,
         "now": now,
+        "width": width,
+        "height": height,
     }
 
 
 @app.get("/")
-async def read_display(request: Request):
+async def read_display(
+    request: Request,
+    width: Annotated[int, Query()] = WIDTH,
+    height: Annotated[int, Query()] = HEIGHT,
+):
     now = datetime.now(tz=UTC)
     weather, electricity = await asyncio.gather(get_weather(PLACE), get_electricity())
     return templates.TemplateResponse(
-        request, "display.html", _build_context(now, weather, electricity)
+        request,
+        "display.html",
+        _build_context(now, weather, electricity, width, height),
     )
 
 
 @app.get("/display.png")
-async def get_display_image():
+async def get_display_image(
+    width: Annotated[int, Query()] = WIDTH,
+    height: Annotated[int, Query()] = HEIGHT,
+):
     now = datetime.now(tz=UTC)
+    is_default_size = width == WIDTH and height == HEIGHT
 
-    if _image_cache.is_fresh(now):
+    if is_default_size and _image_cache.is_fresh(now):
         return Response(content=_image_cache.data, media_type="image/png")
 
     weather, electricity = await asyncio.gather(get_weather(PLACE), get_electricity())
-    ctx = _build_context(now, weather, electricity)
+    ctx = _build_context(now, weather, electricity, width, height)
     html = templates.env.get_template("display.html").render(ctx)
-    png = await render(html)
+    png = await render(html, width, height)
 
     _image_cache.data = png
     _image_cache.time = now
