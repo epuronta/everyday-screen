@@ -32,6 +32,10 @@
             <span style="display:inline-block;width:2rem;vertical-align:middle;">{% include "icons/" + weather.current_icon + ".svg" %}</span>
             {{ weather.current.temperature }}°C &bull; {{ weather.current.wind_speed }} m/s &bull; {{ weather.current.humidity }}% RH
         </p>
+        {% set spot = electricity.current(now) %}
+        {% if spot %}
+        <p>~{{ spot.price | round(0, 'ceil') | int }} c/kWh</p>
+        {% endif %}
     </div>
     <div class="footer">Last Sync: {{ time }}</div>
 </body>

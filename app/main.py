@@ -1,3 +1,4 @@
+import asyncio
 import os
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
@@ -7,6 +8,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import Response
 from fastapi.templating import Jinja2Templates
 
+from .electricity import get_electricity
 from .renderer import render
 from .weather import get_weather
 
@@ -31,20 +33,22 @@ class _ImageCache:
 _image_cache = _ImageCache()
 
 
-def _build_context(now: datetime, weather: object) -> dict:
+def _build_context(now: datetime, weather: object, electricity: object) -> dict:
     return {
         "time": now.astimezone().strftime("%H:%M"),
         "date": now.astimezone().strftime("%A, %b %d"),
         "weather": weather,
+        "electricity": electricity,
+        "now": now,
     }
 
 
 @app.get("/")
 async def read_display(request: Request):
     now = datetime.now(tz=UTC)
-    weather = await get_weather(PLACE)
+    weather, electricity = await asyncio.gather(get_weather(PLACE), get_electricity())
     return templates.TemplateResponse(
-        request, "display.html", _build_context(now, weather)
+        request, "display.html", _build_context(now, weather, electricity)
     )
 
 
@@ -55,8 +59,8 @@ async def get_display_image():
     if _image_cache.is_fresh(now):
         return Response(content=_image_cache.data, media_type="image/png")
 
-    weather = await get_weather(PLACE)
-    ctx = _build_context(now, weather)
+    weather, electricity = await asyncio.gather(get_weather(PLACE), get_electricity())
+    ctx = _build_context(now, weather, electricity)
     html = templates.env.get_template("display.html").render(ctx)
     png = await render(html)
 
