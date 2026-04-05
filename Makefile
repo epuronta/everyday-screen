@@ -1,4 +1,4 @@
-.PHONY: install run lint screenshot
+.PHONY: install run lint screenshot deploy
 
 install:
 	uv sync --all-groups
@@ -10,6 +10,10 @@ run:
 
 screenshot:
 	curl -s http://localhost:8000/display.png -o latest_display.png
+
+deploy:
+	@test -f .env || (echo "ERROR: .env not found — copy .env.sample and fill in values" && exit 1)
+	docker compose -f deploy/compose.yml up --build -d
 
 lint:
 	uv run ruff check .
