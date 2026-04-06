@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
@@ -13,6 +14,8 @@ from .electricity import get_electricity
 from .renderer import HEIGHT, WIDTH, render
 from .transport import get_transport
 from .weather import get_weather
+
+log = logging.getLogger(__name__)
 
 app = FastAPI()
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
@@ -62,6 +65,24 @@ def _build_context(  # noqa: PLR0913
     }
 
 
+async def _fetch_data() -> tuple:
+    results = await asyncio.gather(
+        get_weather(PLACE),
+        get_electricity(),
+        get_transport(DIGITRANSIT_API_KEY, HSL_STOPS, HSL_LINES),
+        return_exceptions=True,
+    )
+    names = ("weather", "electricity", "transport")
+    out = []
+    for name, result in zip(names, results, strict=True):
+        if isinstance(result, Exception):
+            log.error("Failed to fetch %s", name, exc_info=result)
+            out.append(None)
+        else:
+            out.append(result)
+    return tuple(out)
+
+
 @app.get("/")
 async def read_display(
     request: Request,
@@ -69,11 +90,7 @@ async def read_display(
     height: Annotated[int, Query()] = HEIGHT,
 ):
     now = datetime.now(tz=UTC)
-    weather, electricity, transport = await asyncio.gather(
-        get_weather(PLACE),
-        get_electricity(),
-        get_transport(DIGITRANSIT_API_KEY, HSL_STOPS, HSL_LINES),
-    )
+    weather, electricity, transport = await _fetch_data()
     return templates.TemplateResponse(
         request,
         "display.html",
@@ -92,11 +109,7 @@ async def get_display_image(
     if is_default_size and _image_cache.is_fresh(now):
         return Response(content=_image_cache.data, media_type="image/png")
 
-    weather, electricity, transport = await asyncio.gather(
-        get_weather(PLACE),
-        get_electricity(),
-        get_transport(DIGITRANSIT_API_KEY, HSL_STOPS, HSL_LINES),
-    )
+    weather, electricity, transport = await _fetch_data()
     ctx = _build_context(now, weather, electricity, transport, width, height)
     html = templates.env.get_template("display.html").render(ctx)
     png = await render(html, width, height)

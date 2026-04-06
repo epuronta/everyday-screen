@@ -38,15 +38,24 @@
         <div class="container">
             <h1>{{ time }}</h1>
             <p>{{ date }}</p>
+            {% if weather %}
             <p>
                 <span style="display:inline-block;width:2rem;vertical-align:middle;">{% include "icons/" + weather.current_icon + ".svg" %}</span>
                 {{ weather.current.temperature }}°C &bull; {{ weather.current.wind_speed }} m/s &bull; {{ weather.current.humidity }}% RH
             </p>
+            {% else %}
+            <p style="color: #f66;">Weather unavailable</p>
+            {% endif %}
+            {% if electricity %}
             {% set spot = electricity.current(now) %}
             {% if spot %}
             <p>~{{ spot.price | round(0, 'ceil') | int }} c/kWh</p>
             {% endif %}
+            {% else %}
+            <p style="color: #f66;">Electricity unavailable</p>
+            {% endif %}
         </div>
+        {% if transport is not none %}
         {% for stop in transport %}
         <div class="container" style="margin-top: 1rem;">
             <p style="font-size: 1.2rem; color: #aaa; margin-bottom: 0.5rem;">{{ stop.stop_name }}</p>
@@ -59,6 +68,11 @@
             {% endfor %}
         </div>
         {% endfor %}
+        {% else %}
+        <div class="container" style="margin-top: 1rem;">
+            <p style="color: #f66;">Transport unavailable</p>
+        </div>
+        {% endif %}
         <div class="footer">Last Sync: {{ time }}</div>
     </div>
 </body>
