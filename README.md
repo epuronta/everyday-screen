@@ -21,6 +21,19 @@ Runs on a VPS via Docker Compose:
 
 The display device polls `https://<host>/display.png?token=<token>`. FastAPI is not directly reachable from the internet.
 
+## Configuration
+
+Copy `deploy/.env` and fill in:
+
+| Variable | Required | Description |
+|---|---|---|
+| `FMI_CITY` | yes | City name for FMI weather (e.g. `Helsinki`) |
+| `DIGITRANSIT_API_KEY` | yes | API key from [portal-api.digitransit.fi](https://portal-api.digitransit.fi) |
+| `HSL_STOPS` | yes | Comma-separated HSL stop codes as shown on the physical sign (e.g. `H4534,H4260`) |
+| `HSL_LINES` | no | Comma-separated line filter (e.g. `550,65A`). If omitted, all lines at the stop are shown. |
+
+Stop codes are printed on the physical stop signs and can also be found on the [HSL map](https://www.hsl.fi/en).
+
 ## Dependencies
 
 `uv` as usual.
