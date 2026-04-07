@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import os
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -10,6 +9,7 @@ from fastapi import FastAPI, Query, Request
 from fastapi.responses import Response
 from fastapi.templating import Jinja2Templates
 
+from . import settings
 from .electricity import get_electricity
 from .renderer import HEIGHT, WIDTH, render
 from .transport import get_transport
@@ -19,15 +19,6 @@ log = logging.getLogger(__name__)
 
 app = FastAPI()
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
-
-PLACE = os.environ["FMI_CITY"]
-DIGITRANSIT_API_KEY = os.environ["DIGITRANSIT_API_KEY"]
-HSL_STOPS = [s.strip() for s in os.environ["HSL_STOPS"].split(",")]
-HSL_LINES: set[str] | None = (
-    {line.strip() for line in os.environ["HSL_LINES"].split(",")}
-    if os.environ.get("HSL_LINES")
-    else None
-)
 IMAGE_CACHE_TTL = timedelta(minutes=1)
 
 
@@ -67,9 +58,11 @@ def _build_context(  # noqa: PLR0913
 
 async def _fetch_data() -> tuple:
     results = await asyncio.gather(
-        get_weather(PLACE),
+        get_weather(settings.FMI_CITY),
         get_electricity(),
-        get_transport(DIGITRANSIT_API_KEY, HSL_STOPS, HSL_LINES),
+        get_transport(
+            settings.DIGITRANSIT_API_KEY, settings.HSL_STOPS, settings.HSL_LINES
+        ),
         return_exceptions=True,
     )
     names = ("weather", "electricity", "transport")

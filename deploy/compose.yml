@@ -4,8 +4,6 @@ services:
       context: ..
       dockerfile: deploy/Dockerfile
     restart: unless-stopped
-    environment:
-      - FMI_CITY=${FMI_CITY}
     labels:
       # Opt into Traefik routing — without this Traefik ignores the container
       - "traefik.enable=true"

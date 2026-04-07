@@ -3,3 +3,4 @@ __pycache__/
 .ruff_cache/
 latest_display.png
 deploy/.env
+app/settings_local.py

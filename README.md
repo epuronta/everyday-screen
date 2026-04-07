@@ -14,25 +14,20 @@ This keeps the display side dumb — no logic, no updates, just an image viewer.
 
 ### Deployment
 
-Runs on a VPS via Docker Compose:
+Runs on a VPS via Docker Compose with Traefik as the reverse proxy. `deploy/.env` only needs `DOMAIN` — Traefik uses it for routing and TLS.
 
-- **`app`** — FastAPI + Playwright renderer. Internal only, never exposed publicly.
-- **`nginx`** — Public-facing reverse proxy. Terminates TLS and validates a static token before proxying image requests to `app`.
+To deploy:
 
-The display device polls `https://<host>/display.png?token=<token>`. FastAPI is not directly reachable from the internet.
+```bash
+# First time: create app/settings_local.py on the server (see Configuration below)
+git pull && make deploy
+```
+
+`make deploy` builds the Docker image from the local working directory, so `settings_local.py` gets baked in automatically.
 
 ## Configuration
 
-Copy `deploy/.env` and fill in:
-
-| Variable | Required | Description |
-|---|---|---|
-| `FMI_CITY` | yes | City name for FMI weather (e.g. `Helsinki`) |
-| `DIGITRANSIT_API_KEY` | yes | API key from [portal-api.digitransit.fi](https://portal-api.digitransit.fi) |
-| `HSL_STOPS` | yes | Comma-separated HSL stop codes as shown on the physical sign (e.g. `H4534,H4260`) |
-| `HSL_LINES` | no | Comma-separated line filter (e.g. `550,65A`). If omitted, all lines at the stop are shown. |
-
-Stop codes are printed on the physical stop signs and can also be found on the [HSL map](https://www.hsl.fi/en).
+Copy `app/settings_local.sample.py` to `app/settings_local.py` and fill in your values. The sample file documents each setting.
 
 ## Dependencies
 
