@@ -38,7 +38,7 @@ class _CacheEntry:
         return now - self.time < IMAGE_CACHE_TTL
 
 
-_image_cache: dict[tuple[int, int], _CacheEntry] = {}
+_image_cache: dict[tuple[int, int, str], _CacheEntry] = {}
 
 
 def _build_context(  # noqa: PLR0913
@@ -97,27 +97,40 @@ async def read_display(
     )
 
 
-@app.get("/display.png")
-async def get_display_image(
-    width: Annotated[int, Query()] = WIDTH,
-    height: Annotated[int, Query()] = HEIGHT,
-    _: Annotated[None, Depends(_require_token)] = None,
-):
+async def _render_display(width: int, height: int, fmt: str) -> Response:
     now = datetime.now(tz=UTC)
-    cache_key = (width, height)
+    cache_key = (width, height, fmt)
     entry = _image_cache.get(cache_key)
 
     if entry and entry.is_fresh(now):
-        return Response(content=entry.data, media_type="image/png")
+        return Response(content=entry.data, media_type=f"image/{fmt}")
 
     weather, electricity, transport = await _fetch_data()
     ctx = _build_context(now, weather, electricity, transport, width, height)
     html = templates.env.get_template("display.html").render(ctx)
-    png = await render(html, width, height)
+    image = await render(html, width, height, fmt)
 
-    _image_cache[cache_key] = _CacheEntry(data=png, time=now)
+    _image_cache[cache_key] = _CacheEntry(data=image, time=now)
 
-    return Response(content=png, media_type="image/png")
+    return Response(content=image, media_type=f"image/{fmt}")
+
+
+@app.get("/display.png")
+async def get_display_png(
+    width: Annotated[int, Query()] = WIDTH,
+    height: Annotated[int, Query()] = HEIGHT,
+    _: Annotated[None, Depends(_require_token)] = None,
+):
+    return await _render_display(width, height, "png")
+
+
+@app.get("/display.jpg")
+async def get_display_jpg(
+    width: Annotated[int, Query()] = WIDTH,
+    height: Annotated[int, Query()] = HEIGHT,
+    _: Annotated[None, Depends(_require_token)] = None,
+):
+    return await _render_display(width, height, "jpeg")
 
 
 if __name__ == "__main__":
