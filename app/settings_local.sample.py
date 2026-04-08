@@ -1,4 +1,8 @@
 # ruff: noqa: N999
+# Token required on all endpoints — include as ?token=... in the URL.
+# Leave empty to disable auth (e.g. for local dev).
+API_TOKEN = ""
+
 # City name for FMI weather API
 FMI_CITY = "Helsinki"
 

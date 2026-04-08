@@ -5,7 +5,7 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import FastAPI, Query, Request
+from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.responses import Response
 from fastapi.templating import Jinja2Templates
 
@@ -18,6 +18,13 @@ from .weather import get_weather
 log = logging.getLogger(__name__)
 
 app = FastAPI()
+
+
+def _require_token(token: Annotated[str, Query()] = "") -> None:
+    if settings.API_TOKEN and token != settings.API_TOKEN:
+        raise HTTPException(status_code=403)
+
+
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 IMAGE_CACHE_TTL = timedelta(minutes=1)
 
@@ -81,6 +88,7 @@ async def read_display(
     request: Request,
     width: Annotated[int, Query()] = WIDTH,
     height: Annotated[int, Query()] = HEIGHT,
+    _: Annotated[None, Depends(_require_token)] = None,
 ):
     now = datetime.now(tz=UTC)
     weather, electricity, transport = await _fetch_data()
@@ -95,6 +103,7 @@ async def read_display(
 async def get_display_image(
     width: Annotated[int, Query()] = WIDTH,
     height: Annotated[int, Query()] = HEIGHT,
+    _: Annotated[None, Depends(_require_token)] = None,
 ):
     now = datetime.now(tz=UTC)
     is_default_size = width == WIDTH and height == HEIGHT
