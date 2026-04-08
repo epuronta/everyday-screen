@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Annotated
@@ -30,17 +30,15 @@ IMAGE_CACHE_TTL = timedelta(minutes=1)
 
 
 @dataclass
-class _ImageCache:
-    data: bytes | None = None
-    time: datetime | None = field(default=None)
+class _CacheEntry:
+    data: bytes
+    time: datetime
 
     def is_fresh(self, now: datetime) -> bool:
-        if self.data is None or self.time is None:
-            return False
         return now - self.time < IMAGE_CACHE_TTL
 
 
-_image_cache = _ImageCache()
+_image_cache: dict[tuple[int, int], _CacheEntry] = {}
 
 
 def _build_context(  # noqa: PLR0913
@@ -106,18 +104,18 @@ async def get_display_image(
     _: Annotated[None, Depends(_require_token)] = None,
 ):
     now = datetime.now(tz=UTC)
-    is_default_size = width == WIDTH and height == HEIGHT
+    cache_key = (width, height)
+    entry = _image_cache.get(cache_key)
 
-    if is_default_size and _image_cache.is_fresh(now):
-        return Response(content=_image_cache.data, media_type="image/png")
+    if entry and entry.is_fresh(now):
+        return Response(content=entry.data, media_type="image/png")
 
     weather, electricity, transport = await _fetch_data()
     ctx = _build_context(now, weather, electricity, transport, width, height)
     html = templates.env.get_template("display.html").render(ctx)
     png = await render(html, width, height)
 
-    _image_cache.data = png
-    _image_cache.time = now
+    _image_cache[cache_key] = _CacheEntry(data=png, time=now)
 
     return Response(content=png, media_type="image/png")
 
