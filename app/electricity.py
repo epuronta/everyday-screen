@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
+from zoneinfo import ZoneInfo
 
 import httpx
 
@@ -21,10 +22,13 @@ class SpotPrice:
 class ElectricityData:
     hours: list[SpotPrice]
 
-    def current(self, now: datetime) -> SpotPrice | None:
-        current_hour = now.astimezone().replace(minute=0, second=0, microsecond=0)
+    def current(self, now: datetime, tz: ZoneInfo) -> SpotPrice | None:
+        current_hour = now.astimezone(tz).replace(minute=0, second=0, microsecond=0)
         for h in self.hours:
-            if h.time.replace(minute=0, second=0, microsecond=0) == current_hour:
+            if (
+                h.time.astimezone(tz).replace(minute=0, second=0, microsecond=0)
+                == current_hour
+            ):
                 return h
         return None
 
@@ -35,16 +39,18 @@ class ElectricityData:
             return "expensive"
         return "ok"
 
-    def sparkline(self, now: datetime, width: int = 320, height: int = 56) -> dict:
+    def sparkline(
+        self, now: datetime, tz: ZoneInfo, width: int = 320, height: int = 56
+    ) -> dict:
         """Pre-compute SVG data for today's hourly prices."""
-        today = now.astimezone().date()
+        today = now.astimezone(tz).date()
         hours = sorted(
             [
                 h
                 for h in self.hours
-                if h.time.astimezone().date() == today
+                if h.time.astimezone(tz).date() == today
                 and SPARKLINE_HOUR_START
-                <= h.time.astimezone().hour
+                <= h.time.astimezone(tz).hour
                 <= SPARKLINE_HOUR_END
             ],
             key=lambda h: h.time,
@@ -60,7 +66,7 @@ class ElectricityData:
 
         padding = 6
         n = len(hours)
-        now_hour = now.astimezone().replace(minute=0, second=0, microsecond=0)
+        now_hour = now.astimezone(tz).replace(minute=0, second=0, microsecond=0)
 
         points = []
         current_x = None
@@ -75,7 +81,7 @@ class ElectricityData:
             )
             points.append(f"{x},{y}")
             if (
-                h.time.astimezone().replace(minute=0, second=0, microsecond=0)
+                h.time.astimezone(tz).replace(minute=0, second=0, microsecond=0)
                 == now_hour
             ):
                 current_x = x

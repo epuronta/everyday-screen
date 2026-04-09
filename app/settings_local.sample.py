@@ -3,6 +3,9 @@
 # Leave empty to disable auth (e.g. for local dev).
 API_TOKEN = ""
 
+# IANA timezone name — used for all display times
+TIMEZONE = "Europe/Helsinki"
+
 # City name for FMI weather API
 FMI_CITY = "Helsinki"
 

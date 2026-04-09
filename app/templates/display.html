@@ -84,13 +84,13 @@
         <!-- Electricity -->
         <div class="cell cell-electricity">
             {% if electricity %}
-            {% set spot = electricity.current(now) %}
+            {% set spot = electricity.current(now, tz) %}
             {% if spot %}
             <div class="info-row">
                 <span>{% include "icons/elec-" + electricity.classify(spot.price) + ".svg" %}</span>
                 <span>~{{ spot.price | round(0, 'ceil') | int }} <span class="unit">c/kWh</span></span>
             </div>
-            {% set spark = electricity.sparkline(now, (width / 2 - 64) | int, (height / 4) | int) %}
+            {% set spark = electricity.sparkline(now, tz, (width / 2 - 64) | int, (height / 4) | int) %}
             {% if spark %}
             <svg width="{{ spark.width }}" height="{{ spark.height }}" viewBox="0 0 {{ spark.width }} {{ spark.height }}" style="display:block; margin-top: 0.5rem;">
                 {% for d in spark.dividers %}
@@ -125,7 +125,7 @@
                 <div class="departure">
                     <span class="dep-line">{{ dep.line }}</span>
                     <span class="dep-headsign">{{ dep.headsign }}</span>
-                    <span class="dep-time">{{ dep.time.astimezone().strftime("%H:%M") }}</span>
+                    <span class="dep-time">{{ dep.time.astimezone(tz).strftime("%H:%M") }}</span>
                 </div>
                 {% endfor %}
             </div>

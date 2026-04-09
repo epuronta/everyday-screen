@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Annotated
+from zoneinfo import ZoneInfo
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.responses import Response
@@ -41,6 +42,9 @@ class _CacheEntry:
 _image_cache: dict[tuple[int, int, str], _CacheEntry] = {}
 
 
+TZ = ZoneInfo(settings.TIMEZONE)
+
+
 def _build_context(  # noqa: PLR0913
     now: datetime,
     weather: object,
@@ -49,13 +53,15 @@ def _build_context(  # noqa: PLR0913
     width: int,
     height: int,
 ) -> dict:
+    local = now.astimezone(TZ)
     return {
-        "time": now.astimezone().strftime("%H:%M"),
-        "date": now.astimezone().strftime("%A, %b %d"),
+        "time": local.strftime("%H:%M"),
+        "date": local.strftime("%A, %b %d"),
         "weather": weather,
         "electricity": electricity,
         "transport": transport,
         "now": now,
+        "tz": TZ,
         "width": width,
         "height": height,
     }
