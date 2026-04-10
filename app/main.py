@@ -62,6 +62,7 @@ def _build_context(  # noqa: PLR0913
         "transport": transport,
         "now": now,
         "tz": TZ,
+        "timedelta": timedelta,
         "width": width,
         "height": height,
     }

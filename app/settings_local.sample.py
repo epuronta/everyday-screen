@@ -17,6 +17,6 @@ DIGITRANSIT_API_KEY = "your-key-here"
 from app.transport import StopConfig  # noqa: E402
 
 HSL_STOPS = [
-    StopConfig("H0062", lines={"561", "560", "54"}),
+    StopConfig("H0062", lines={"561", "560", "54"}, walk_time_minutes=5),
     StopConfig("H2041"),
 ]

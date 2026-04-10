@@ -52,6 +52,7 @@
         .dep-line { font-weight: bold; min-width: 3.5rem; }
         .dep-headsign { flex: 1; }
         .dep-time { color: #555; white-space: nowrap; }
+        .departure.unreachable { opacity: 0.3; }
         .unavailable { color: #555; font-size: 1.6rem; }
     </style>
 </head>
@@ -118,13 +119,18 @@
             {% if transport %}
             {% for stop in transport %}
             <div class="stop">
-                <p class="stop-name">{{ stop.stop_name }}</p>
+                <p class="stop-name" title="{{ stop.stop_id }}">{{ stop.stop_name }}</p>
+                {% set walk = timedelta(minutes=stop.walk_time_minutes) %}
+                {% set ns = namespace(shown=0) %}
                 {% for dep in stop.departures %}
-                <div class="departure">
+                {% if ns.shown < 5 and dep.time > now + walk / 2 %}
+                {% set ns.shown = ns.shown + 1 %}
+                <div class="departure{% if dep.time <= now + walk %} unreachable{% endif %}">
                     <span class="dep-line">{{ dep.line }}</span>
                     <span class="dep-headsign">{{ dep.headsign }}</span>
                     <span class="dep-time">{{ dep.time.astimezone(tz).strftime("%H:%M") }}</span>
                 </div>
+                {% endif %}
                 {% endfor %}
             </div>
             {% endfor %}

@@ -38,6 +38,7 @@ _code_to_gtfs_id: dict[str, str] = {}
 class StopConfig:
     code: str
     lines: set[str] | None = None
+    walk_time_minutes: int = 0
 
 
 @dataclass
@@ -52,6 +53,7 @@ class StopDepartures:
     stop_id: str
     stop_name: str
     departures: list[Departure]
+    walk_time_minutes: int = 0
 
 
 @dataclass
@@ -92,13 +94,14 @@ def _parse_departures(
         stop_id=stop_id,
         stop_name=stop_data["name"],
         departures=departures,
+        walk_time_minutes=stop.walk_time_minutes,
     )
 
 
 async def get_transport(
     api_key: str,
     stops: list[StopConfig],
-    departures_per_stop: int = 5,
+    departures_per_stop: int = 10,
 ) -> list[StopDepartures]:
     now = datetime.now(tz=UTC)
 
