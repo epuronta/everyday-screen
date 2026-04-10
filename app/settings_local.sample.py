@@ -13,7 +13,10 @@ FMI_CITY = "Helsinki"
 DIGITRANSIT_API_KEY = "your-key-here"
 
 # Stop codes printed on the physical sign, also findable on https://www.hsl.fi/en
-HSL_STOPS = ["H0062", "H2041"]
+# lines is optional — omit to show all lines at the stop
+from app.transport import StopConfig  # noqa: E402
 
-# Optionally filter by line. Omit or set to None to show all lines at the stop.
-HSL_LINES = {}
+HSL_STOPS = [
+    StopConfig("H0062", lines={"561", "560", "54"}),
+    StopConfig("H2041"),
+]

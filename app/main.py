@@ -71,9 +71,7 @@ async def _fetch_data() -> tuple:
     results = await asyncio.gather(
         get_weather(settings.FMI_CITY),
         get_electricity(),
-        get_transport(
-            settings.DIGITRANSIT_API_KEY, settings.HSL_STOPS, settings.HSL_LINES
-        ),
+        get_transport(settings.DIGITRANSIT_API_KEY, settings.HSL_STOPS),
         return_exceptions=True,
     )
     names = ("weather", "electricity", "transport")
