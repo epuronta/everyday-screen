@@ -5,7 +5,7 @@
         * { box-sizing: border-box; }
         body {
             margin: 0;
-            background: #222;
+            background: #ddd;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -14,8 +14,8 @@
         .display {
             width: {{ width }}px;
             height: {{ height }}px;
-            background: black;
-            color: white;
+            background: white;
+            color: black;
             font-family: 'Inter', sans-serif;
             overflow: hidden;
             position: relative;
@@ -29,32 +29,30 @@
         }
         .cell {
             padding: 2rem;
-            border: 1px solid #1a1a1a;
-            border-left: 4px solid white;
             display: flex;
             flex-direction: column;
             justify-content: center;
         }
-        .cell-clock       { grid-area: clock; }
-        .cell-weather     { grid-area: weather; }
-        .cell-electricity { grid-area: electricity; }
+        .cell-clock       { grid-area: clock; border-right: 2px solid black; }
+        .cell-weather     { grid-area: weather; border-right: 2px solid black; }
+        .cell-electricity { grid-area: electricity; border-right: 2px solid black; }
         .cell-transport   { grid-area: transport; justify-content: flex-start; }
 
-        .clock-date { font-size: 1.8rem; margin: 0; }
-        .footer { position: absolute; bottom: 8px; right: 12px; font-size: 0.85rem; color: #555; }
+        .clock-date { font-size: 2.2rem; margin: 0; }
+        .footer { position: absolute; bottom: 8px; right: 12px; font-size: 1rem; color: #aaa; }
 
-        .info-row { font-size: 1.5rem; margin: 0.4rem 0; display: flex; align-items: center; gap: 0.5rem; }
-        .info-row svg { width: 1.8rem; height: 1.8rem; flex-shrink: 0; }
-        .info-row .unit { font-size: 0.9em; color: #aaa; }
-        .info-row .muted { color: #aaa; }
+        .info-row { font-size: 1.8rem; margin: 0.4rem 0; display: flex; align-items: center; gap: 0.5rem; }
+        .info-row svg { width: 2.2rem; height: 2.2rem; flex-shrink: 0; }
+        .info-row .unit { font-size: 0.9em; color: #555; }
+        .info-row .muted { color: #555; }
 
         .stop { margin-bottom: 1.5rem; }
-        .stop-name { font-size: 1.1rem; color: #aaa; margin: 0 0 0.4rem; }
-        .departure { font-size: 1.3rem; margin: 0.25rem 0; display: flex; gap: 1rem; }
+        .stop-name { font-size: 1.3rem; color: #555; margin: 0 0 0.4rem; }
+        .departure { font-size: 1.6rem; margin: 0.25rem 0; display: flex; gap: 1rem; }
         .dep-line { font-weight: bold; min-width: 3.5rem; }
         .dep-headsign { flex: 1; }
-        .dep-time { color: #aaa; white-space: nowrap; }
-        .unavailable { color: #aaa; font-size: 1.3rem; }
+        .dep-time { color: #555; white-space: nowrap; }
+        .unavailable { color: #555; font-size: 1.6rem; }
     </style>
 </head>
 <body>
@@ -94,18 +92,18 @@
             {% if spark %}
             <svg width="{{ spark.width }}" height="{{ spark.height }}" viewBox="0 0 {{ spark.width }} {{ spark.height }}" style="display:block; margin-top: 0.5rem;">
                 {% for d in spark.dividers %}
-                <line x1="{{ d.x }}" y1="0" x2="{{ d.x }}" y2="{{ spark.height }}" stroke="#333" stroke-width="1"/>
+                <line x1="{{ d.x }}" y1="0" x2="{{ d.x }}" y2="{{ spark.height }}" stroke="#ccc" stroke-width="1"/>
                 <text x="{{ d.x }}" y="{{ spark.height }}" text-anchor="middle" font-size="8" fill="#888">{{ d.label }}</text>
                 {% endfor %}
-                <text x="2" y="{{ spark.padding + 8 }}" font-size="8" fill="white">{{ spark.max_label }}</text>
-                <text x="2" y="{{ spark.height }}" font-size="8" fill="white">{{ spark.min_label }}</text>
+                <text x="2" y="{{ spark.padding + 8 }}" font-size="8" fill="black">{{ spark.max_label }}</text>
+                <text x="2" y="{{ spark.height }}" font-size="8" fill="black">{{ spark.min_label }}</text>
                 {% for t in spark.thresholds %}
                 <line x1="0" y1="{{ t.y }}" x2="{{ spark.width }}" y2="{{ t.y }}" stroke="#888" stroke-width="1" stroke-dasharray="4,3"/>
                 <text x="{{ spark.width - 2 }}" y="{{ t.y - 2 }}" text-anchor="end" font-size="8" fill="#888">{{ t.label }}</text>
                 {% endfor %}
-                <polyline points="{{ spark.points }}" fill="none" stroke="white" stroke-width="1.5"/>
+                <polyline points="{{ spark.points }}" fill="none" stroke="black" stroke-width="1.5"/>
                 {% if spark.current_x is not none and spark.current_y is not none %}
-                <circle cx="{{ spark.current_x }}" cy="{{ spark.current_y }}" r="3" fill="white"/>
+                <circle cx="{{ spark.current_x }}" cy="{{ spark.current_y }}" r="3" fill="black"/>
                 {% endif %}
             </svg>
             {% endif %}
