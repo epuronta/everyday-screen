@@ -74,7 +74,13 @@ def _parse_departures(
             continue
         # serviceDay = Unix ts for midnight; realtimeDeparture = seconds from midnight
         t = datetime.fromtimestamp(st["serviceDay"] + st["realtimeDeparture"], tz=UTC)
-        headsign = st["headsign"].split(" via ")[0]
+        headsign = (
+            st["headsign"]
+            .split(" via ")[0]
+            .removesuffix("(M)")
+            .removesuffix(" (M)")
+            .rstrip()
+        )
         departures.append(Departure(line=line, headsign=headsign, time=t))
     return StopDepartures(
         stop_id=stop_id,
