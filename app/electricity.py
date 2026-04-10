@@ -85,7 +85,8 @@ class ElectricityData:
         if max_p == min_p:
             max_p = min_p + 1.0
 
-        padding = 6
+        pad_top = 6
+        pad_bottom = 20  # extra room so the line never collides with hour labels
         now_hour = now.astimezone(tz).replace(minute=0, second=0, microsecond=0)
 
         # Fixed 48h window — x position is independent of how much data is available
@@ -97,8 +98,9 @@ class ElectricityData:
 
         def price_to_y(price: float) -> float:
             return round(
-                padding
-                + (height - 2 * padding) * (1 - (price - min_p) / (max_p - min_p)),
+                pad_top
+                + (height - pad_top - pad_bottom)
+                * (1 - (price - min_p) / (max_p - min_p)),
                 1,
             )
 
@@ -121,11 +123,12 @@ class ElectricityData:
 
         thresholds = []
         for price, label in [
+            (0.0, "0"),
             (CHEAP_THRESHOLD, str(CHEAP_THRESHOLD)),
             (EXPENSIVE_THRESHOLD, str(EXPENSIVE_THRESHOLD)),
         ]:
             y = price_to_y(price)
-            if padding <= y <= height - padding:
+            if pad_top <= y <= height - pad_bottom:
                 thresholds.append({"y": y, "label": label})
 
         # Dividers at every 2nd hour across the full 48h window
@@ -142,9 +145,6 @@ class ElectricityData:
             "current_y": current_y,
             "thresholds": thresholds,
             "dividers": dividers,
-            "min_label": f"{min_p:.1f}",
-            "max_label": f"{max_p:.1f}",
-            "padding": padding,
             "width": width,
             "height": height,
         }
