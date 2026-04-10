@@ -23,9 +23,9 @@
             grid-template-columns: 1fr 1fr;
             grid-template-rows: auto auto 1fr;
             grid-template-areas:
-                "clock       transport"
-                "weather     transport"
-                "electricity transport";
+                "clock        transport"
+                "weather      transport"
+                "electricity  electricity";
         }
         .cell {
             padding: 2rem;
@@ -33,10 +33,10 @@
             flex-direction: column;
             justify-content: center;
         }
-        .cell-clock       { grid-area: clock; border-right: 2px solid black; }
-        .cell-weather     { grid-area: weather; border-right: 2px solid black; }
-        .cell-electricity { grid-area: electricity; border-right: 2px solid black; }
-        .cell-transport   { grid-area: transport; justify-content: flex-start; }
+        .cell-clock         { grid-area: clock; border-right: 2px solid black; }
+        .cell-weather       { grid-area: weather; border-right: 2px solid black; }
+        .cell-electricity   { grid-area: electricity; border-top: 2px solid black; }
+        .cell-transport     { grid-area: transport; justify-content: flex-start; }
 
         .clock-date { font-size: 2.2rem; margin: 0; }
         .footer { position: absolute; bottom: 8px; right: 12px; font-size: 1rem; color: #aaa; }
@@ -89,7 +89,8 @@
                 <span>{% include "icons/elec-" + electricity.classify(spot.price) + ".svg" %}</span>
                 <span>~{{ spot.price | round(0, 'ceil') | int }} <span class="unit">c/kWh</span></span>
             </div>
-            {% set spark = electricity.sparkline(now, tz, (width / 2 - 64) | int, (height / 4) | int) %}
+            {% endif %}
+            {% set spark = electricity.sparkline(now, tz, (width - 64) | int, (height / 4) | int) %}
             {% if spark %}
             <svg width="{{ spark.width }}" height="{{ spark.height }}" viewBox="0 0 {{ spark.width }} {{ spark.height }}" style="display:block; margin-top: 0.5rem;">
                 {% for d in spark.dividers %}
@@ -102,12 +103,11 @@
                 <line x1="0" y1="{{ t.y }}" x2="{{ spark.width }}" y2="{{ t.y }}" stroke="#888" stroke-width="1" stroke-dasharray="4,3"/>
                 <text x="{{ spark.width - 2 }}" y="{{ t.y - 2 }}" text-anchor="end" font-size="8" fill="#888">{{ t.label }}</text>
                 {% endfor %}
-                <polyline points="{{ spark.points }}" fill="none" stroke="black" stroke-width="1.5"/>
+                <path d="{{ spark.path_d }}" fill="none" stroke="black" stroke-width="1.5"/>
                 {% if spark.current_x is not none and spark.current_y is not none %}
                 <circle cx="{{ spark.current_x }}" cy="{{ spark.current_y }}" r="3" fill="black"/>
                 {% endif %}
             </svg>
-            {% endif %}
             {% endif %}
             {% else %}
             <div class="info-row unavailable">Electricity unavailable</div>
