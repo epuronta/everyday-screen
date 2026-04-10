@@ -35,7 +35,7 @@
         }
         .cell-clock         { grid-area: clock; border-right: 2px solid black; }
         .cell-weather       { grid-area: weather; border-right: 2px solid black; }
-        .cell-electricity   { grid-area: electricity; border-top: 2px solid black; }
+        .cell-electricity   { grid-area: electricity; border-top: 2px solid black; padding-bottom: 3rem; }
         .cell-transport     { grid-area: transport; justify-content: flex-start; }
 
         .clock-date { font-size: 2.2rem; margin: 0; }
@@ -90,12 +90,12 @@
                 <span>~{{ spot.price | round(0, 'ceil') | int }} <span class="unit">c/kWh</span></span>
             </div>
             {% endif %}
-            {% set spark = electricity.sparkline(now, tz, (width - 64) | int, (height / 4) | int) %}
+            {% set spark = electricity.sparkline(now, tz, (width - 64) | int, (height / 4 - 48) | int) %}
             {% if spark %}
             <svg width="{{ spark.width }}" height="{{ spark.height }}" viewBox="0 0 {{ spark.width }} {{ spark.height }}" style="display:block; margin-top: 0.5rem;">
                 {% for d in spark.dividers %}
-                <line x1="{{ d.x }}" y1="0" x2="{{ d.x }}" y2="{{ spark.height }}" stroke="#ccc" stroke-width="1"/>
-                <text x="{{ d.x }}" y="{{ spark.height }}" text-anchor="middle" font-size="8" fill="#888">{{ d.label }}</text>
+                <line x1="{{ d.x }}" y1="0" x2="{{ d.x }}" y2="{{ spark.height }}" stroke="#bbb" stroke-width="1.5"/>
+                <text x="{{ d.x }}" y="{{ spark.height }}" text-anchor="middle" font-size="11" fill="#555" font-weight="600">{{ d.label }}</text>
                 {% endfor %}
                 <text x="2" y="{{ spark.padding + 8 }}" font-size="8" fill="black">{{ spark.max_label }}</text>
                 <text x="2" y="{{ spark.height }}" font-size="8" fill="black">{{ spark.min_label }}</text>
@@ -105,7 +105,7 @@
                 {% endfor %}
                 <path d="{{ spark.path_d }}" fill="none" stroke="black" stroke-width="1.5"/>
                 {% if spark.current_x is not none and spark.current_y is not none %}
-                <circle cx="{{ spark.current_x }}" cy="{{ spark.current_y }}" r="3" fill="black"/>
+                <circle cx="{{ spark.current_x }}" cy="{{ spark.current_y }}" r="6" fill="black"/>
                 {% endif %}
             </svg>
             {% endif %}

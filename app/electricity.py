@@ -4,7 +4,7 @@ from zoneinfo import ZoneInfo
 
 import httpx
 
-SPOT_URL = "https://api.spot-hinta.fi/TodayAndDayForward"
+SPOT_URL = "https://api.spot-hinta.fi/TodayAndDayForward?priceResolution=60"
 CHEAP_THRESHOLD = 5.0  # c/kWh
 EXPENSIVE_THRESHOLD = 15.0  # c/kWh
 CACHE_TTL = timedelta(hours=1)
@@ -107,7 +107,7 @@ class ElectricityData:
         current_y = None
 
         for h in hours:
-            x = time_to_x(h.time)
+            x = time_to_x(h.time + timedelta(minutes=30))  # centre of the hour
             y = price_to_y(h.price)
             pts.append((x, y))
             if (
@@ -128,13 +128,13 @@ class ElectricityData:
             if padding <= y <= height - padding:
                 thresholds.append({"y": y, "label": label})
 
-        # Dividers at every 4th hour across the full 48h window
+        # Dividers at every 2nd hour across the full 48h window
         dividers = []
-        t = midnight + timedelta(hours=4)  # skip hour 0 (left edge)
+        t = midnight + timedelta(hours=2)  # skip hour 0 (left edge)
         while t <= window_end:
             x = time_to_x(t.astimezone(UTC))
             dividers.append({"x": x, "label": str(t.hour)})
-            t += timedelta(hours=4)
+            t += timedelta(hours=2)
 
         return {
             "path_d": path_d,
