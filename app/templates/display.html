@@ -64,9 +64,9 @@
         .departure { font-size: 1.6rem; margin: 0.25rem 0; display: flex; gap: 1rem; }
         .dep-line { font-weight: bold; min-width: 3.5rem; }
         .dep-headsign { flex: 1; }
-        .dep-time { color: var(--g2); white-space: nowrap; }
-        .departure.unreachable { color: var(--g4); }
-        .departure.unreachable .dep-time { color: var(--g4); }
+        .dep-time { color: var(--g1); white-space: nowrap; }
+        .departure.unreachable { color: var(--g3); }
+        .departure.unreachable .dep-time { color: var(--g3); }
         .unavailable { color: var(--g2); font-size: 1.6rem; }
     </style>
 </head>
@@ -113,7 +113,7 @@
                 <text x="{{ d.x }}" y="{{ spark.height }}" text-anchor="middle" font-size="11" style="fill:var(--g2)" font-weight="600">{{ d.label }}</text>
                 {% endfor %}
 {% for t in spark.thresholds %}
-                <line x1="0" y1="{{ t.y }}" x2="{{ spark.width }}" y2="{{ t.y }}" style="stroke:var(--g4)" stroke-width="1.5"/>
+                <line x1="0" y1="{{ t.y }}" x2="{{ spark.width }}" y2="{{ t.y }}" style="stroke:var(--g3)" stroke-width="1.5"/>
                 <text x="{{ spark.width - 2 }}" y="{{ t.y - 2 }}" text-anchor="end" font-size="11" style="fill:var(--g2)" font-weight="600">{{ t.label }}</text>
                 {% endfor %}
                 <path d="{{ spark.path_d }}" fill="none" style="stroke:var(--g0)" stroke-width="1.5"/>
