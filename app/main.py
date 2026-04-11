@@ -102,22 +102,22 @@ async def read_display(
     )
 
 
-async def _render_display(width: int, height: int, fmt: str) -> Response:
+async def _render_display(width: int, height: int) -> Response:
     now = datetime.now(tz=UTC)
-    cache_key = (width, height, fmt)
+    cache_key = (width, height)
     entry = _image_cache.get(cache_key)
 
     if entry and entry.is_fresh(now):
-        return Response(content=entry.data, media_type=f"image/{fmt}")
+        return Response(content=entry.data, media_type="image/png")
 
     weather, electricity, transport = await _fetch_data()
     ctx = _build_context(now, weather, electricity, transport, width, height)
     html = templates.env.get_template("display.html").render(ctx)
-    image = await render(html, width, height, fmt)
+    image = await render(html, width, height)
 
     _image_cache[cache_key] = _CacheEntry(data=image, time=now)
 
-    return Response(content=image, media_type=f"image/{fmt}")
+    return Response(content=image, media_type="image/png")
 
 
 @app.get("/display.png")
@@ -126,16 +126,7 @@ async def get_display_png(
     height: Annotated[int, Query()] = HEIGHT,
     _: Annotated[None, Depends(_require_token)] = None,
 ):
-    return await _render_display(width, height, "png")
-
-
-@app.get("/display.jpg")
-async def get_display_jpg(
-    width: Annotated[int, Query()] = WIDTH,
-    height: Annotated[int, Query()] = HEIGHT,
-    _: Annotated[None, Depends(_require_token)] = None,
-):
-    return await _render_display(width, height, "jpeg")
+    return await _render_display(width, height)
 
 
 if __name__ == "__main__":
