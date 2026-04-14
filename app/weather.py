@@ -1,6 +1,7 @@
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
+from zoneinfo import ZoneInfo
 
 import httpx
 
@@ -17,6 +18,18 @@ class CurrentWeather:
     wind_speed: float  # m/s
     humidity: float  # %
 
+
+# Lower value = worse condition (for worst-case outfit planning)
+_ICON_PRIORITY: dict[str, int] = {
+    "thunder": 0,
+    "snow": 1,
+    "sleet": 2,
+    "rain": 3,
+    "fog": 4,
+    "cloudy": 5,
+    "partly-cloudy": 6,
+    "clear": 7,
+}
 
 _SYMBOL_ICONS: dict[int, str] = {
     1: "clear",
@@ -47,6 +60,26 @@ class ForecastHour:
 
 
 @dataclass
+class WeatherBlock:
+    label: str  # "Aamu" / "Ilta"
+    temp_min: float  # °C
+    temp_max: float  # °C
+    icon: str  # worst-case condition in the block
+
+
+@dataclass
+class WeatherDay:
+    label: str  # "Tänään" / "Huomenna"
+    blocks: list[WeatherBlock]
+
+
+def _worst_icon(hours: list[ForecastHour]) -> str:
+    if not hours:
+        return "cloudy"
+    return min(hours, key=lambda h: _ICON_PRIORITY.get(h.icon, 5)).icon
+
+
+@dataclass
 class WeatherData:
     current: CurrentWeather
     forecast: list[ForecastHour]
@@ -54,6 +87,39 @@ class WeatherData:
     @property
     def current_icon(self) -> str:
         return self.forecast[0].icon if self.forecast else "cloudy"
+
+    def day_groups(self, tz: ZoneInfo, now: datetime) -> list[WeatherDay]:
+        local_now = now.astimezone(tz)
+        today = local_now.date()
+        tomorrow = today + timedelta(days=1)
+
+        def _block(
+            date: object, start_h: int, end_h: int, label: str
+        ) -> WeatherBlock | None:
+            in_range = [
+                f
+                for f in self.forecast
+                if f.time.astimezone(tz).date() == date
+                and start_h <= f.time.astimezone(tz).hour < end_h
+            ]
+            if not in_range:
+                return None
+            icon = _worst_icon(in_range)
+            temps = [f.temperature for f in in_range]
+            return WeatherBlock(
+                label=label, temp_min=min(temps), temp_max=max(temps), icon=icon
+            )
+
+        days = []
+        for date, label in [(today, "Tänään"), (tomorrow, "Huomenna")]:
+            blocks = [
+                b
+                for b in [_block(date, 6, 12, "Aamu"), _block(date, 12, 18, "Ilta")]
+                if b is not None
+            ]
+            if blocks:
+                days.append(WeatherDay(label=label, blocks=blocks))
+        return days
 
 
 @dataclass
@@ -104,7 +170,7 @@ async def get_weather(place: str) -> WeatherData:
     if _cache.is_fresh(now):
         return _cache.data  # type: ignore[return-value]
 
-    end_of_day = now.replace(hour=23, minute=59, second=59)
+    end_of_day = (now + timedelta(days=1)).replace(hour=23, minute=59, second=59)
 
     async with httpx.AsyncClient() as client:
         obs_resp = await client.get(

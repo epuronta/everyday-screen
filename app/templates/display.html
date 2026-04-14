@@ -59,6 +59,15 @@
         .info-row .unit { font-size: 0.9em; color: var(--g2); }
         .info-row .muted { color: var(--g2); }
 
+        .weather-days { display: flex; gap: 2rem; }
+        .weather-day-label { font-size: 1rem; color: var(--g2); margin-bottom: 0.3rem; }
+        .weather-blocks { display: flex; gap: 1.2rem; }
+        .weather-block { display: flex; flex-direction: column; gap: 0.2rem; }
+        .weather-block-label { font-size: 0.9rem; color: var(--g3); }
+        .weather-block-body { display: flex; align-items: center; gap: 0.3rem; }
+        .weather-block-body svg { width: 2rem; height: 2rem; flex-shrink: 0; }
+        .weather-block-temp { font-size: 1.6rem; }
+
         .stop { margin-bottom: 1.5rem; }
         .stop-name { font-size: 1.3rem; color: var(--g2); margin: 0 0 0.4rem; }
         .departure { font-size: 1.6rem; margin: 0.25rem 0; display: flex; gap: 1rem; }
@@ -81,14 +90,27 @@
         <!-- Weather -->
         <div class="cell cell-weather">
             {% if weather %}
-            <div class="info-row">
-                <span>{% include "icons/" + weather.current_icon + ".svg" %}</span>
-                <span>{{ weather.current.temperature }}°C</span>
-                <span class="muted">&bull;</span>
-                <span>{{ weather.current.wind_speed }} <span class="unit">m/s</span></span>
-                <span class="muted">&bull;</span>
-                <span>{{ weather.current.humidity }}<span class="unit">% RH</span></span>
+            {% set days = weather.day_groups(tz, now) %}
+            {% if days %}
+            <div class="weather-days">
+                {% for day in days %}
+                <div class="weather-day">
+                    <div class="weather-day-label">{{ day.label }}</div>
+                    <div class="weather-blocks">
+                        {% for block in day.blocks %}
+                        <div class="weather-block">
+                            <div class="weather-block-label">{{ block.label }}</div>
+                            <div class="weather-block-body">
+                                {% include "icons/" + block.icon + ".svg" %}
+                                <span class="weather-block-temp">{{ block.temp_min | round(0) | int }}–{{ block.temp_max | round(0) | int }}°</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
             </div>
+            {% endif %}
             {% else %}
             <div class="info-row unavailable">Weather unavailable</div>
             {% endif %}
