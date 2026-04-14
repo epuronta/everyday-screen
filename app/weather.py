@@ -5,7 +5,10 @@ from zoneinfo import ZoneInfo
 
 import httpx
 
+from . import settings
+
 WFS_URL = "https://opendata.fmi.fi/wfs"
+_TZ = ZoneInfo(settings.TIMEZONE)
 CACHE_TTL = timedelta(minutes=10)
 
 _OBS_QUERY = "fmi::observations::weather::timevaluepair"
@@ -114,7 +117,7 @@ class WeatherData:
         for date, label in [(today, "Tänään"), (tomorrow, "Huomenna")]:
             blocks = [
                 b
-                for b in [_block(date, 6, 12, "Aamu"), _block(date, 12, 18, "Ilta")]
+                for b in [_block(date, 6, 12, "Aamu"), _block(date, 12, 20, "Ilta")]
                 if b is not None
             ]
             if blocks:
@@ -187,6 +190,9 @@ async def get_weather(place: str) -> WeatherData:
         )
         obs_resp.raise_for_status()
 
+        start_of_today = (
+            now.astimezone(_TZ).replace(hour=0, minute=0, second=0).astimezone(UTC)
+        )
         fct_resp = await client.get(
             WFS_URL,
             params={
@@ -195,7 +201,7 @@ async def get_weather(place: str) -> WeatherData:
                 "request": "GetFeature",
                 "storedquery_id": _FCT_QUERY,
                 "place": place,
-                "starttime": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "starttime": start_of_today.strftime("%Y-%m-%dT%H:%M:%SZ"),
                 "endtime": end_of_day.strftime("%Y-%m-%dT%H:%M:%SZ"),
                 "timestep": "60",
                 "parameters": "Temperature,WindSpeedMS,WeatherSymbol3",
