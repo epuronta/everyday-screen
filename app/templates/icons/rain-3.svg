@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
   <g transform="translate(3, 0)">
   <path d="M 8 36 Q 2 36 2 28 Q 2 20 10 20 Q 10 10 22 8 Q 34 6 38 16 Q 46 12 52 18 Q 58 20 56 28 Q 54 38 44 36 Z"/>
-  <line x1="20" y1="44" x2="16" y2="58"/>
-  <line x1="32" y1="44" x2="28" y2="58"/>
-  <line x1="44" y1="44" x2="40" y2="58"/>
+  <path d="M 20 43 C 26 48 25 57 20 57 C 15 57 14 48 20 43 Z" fill="currentColor" stroke="none"/>
+  <path d="M 32 43 C 38 48 37 57 32 57 C 27 57 26 48 32 43 Z" fill="currentColor" stroke="none"/>
+  <path d="M 44 43 C 50 48 49 57 44 57 C 39 57 38 48 44 43 Z" fill="currentColor" stroke="none"/>
   </g>
 </svg>
