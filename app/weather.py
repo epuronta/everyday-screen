@@ -1,6 +1,7 @@
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
+from enum import IntEnum
 from zoneinfo import ZoneInfo
 
 import httpx
@@ -38,25 +39,76 @@ _ICON_PRIORITY: dict[str, int] = {
     "clear": 11,
 }
 
+
+class WeatherSymbol(IntEnum):
+    """WeatherSymbol3 codes (FMI)."""
+
+    CLEAR = 1
+    PARTLY_CLOUDY = 2
+    CLOUDY = 3
+    RAIN_LIGHT = 21
+    RAIN_MODERATE = 22
+    RAIN_HEAVY = 23
+    RAIN_SHOWER_LIGHT = 31
+    RAIN_SHOWER_MODERATE = 32
+    RAIN_SHOWER_HEAVY = 33
+    SNOW_LIGHT = 41
+    SNOW_MODERATE = 42
+    SNOW_HEAVY = 43
+    SNOW_SHOWER_LIGHT = 51
+    SNOW_SHOWER_MODERATE = 52
+    SNOW_SHOWER_HEAVY = 53
+    THUNDER_LIGHT = 61
+    THUNDER_MODERATE = 62
+    THUNDER_HEAVY = 63
+    THUNDER_SHOWER = 64
+    SLEET_LIGHT = 71
+    SLEET_MODERATE = 72
+    SLEET_HEAVY = 73
+    SLEET_SHOWER_LIGHT = 81
+    SLEET_SHOWER_MODERATE = 82
+    SLEET_SHOWER_HEAVY = 83
+    FOG = 91
+    FREEZING_FOG = 92
+
+
 _SYMBOL_ICONS: dict[int, str] = {
-    1: "clear",
-    2: "partly-cloudy",
-    3: "cloudy",
-    21: "rain-1",
-    22: "rain-2",
-    23: "rain-3",
-    31: "rain-1",
-    32: "rain-2",
-    33: "rain-3",
-    41: "snow-1",
-    42: "snow-2",
-    43: "snow-3",
-    51: "snow-1",
-    52: "snow-2",
-    53: "snow-3",
-    **dict.fromkeys([61, 62, 63, 64], "thunder"),
-    **dict.fromkeys([71, 72, 73, 81, 82, 83], "sleet"),
-    **dict.fromkeys([91, 92], "fog"),
+    WeatherSymbol.CLEAR: "clear",
+    WeatherSymbol.PARTLY_CLOUDY: "partly-cloudy",
+    WeatherSymbol.CLOUDY: "cloudy",
+    WeatherSymbol.RAIN_LIGHT: "rain-1",
+    WeatherSymbol.RAIN_MODERATE: "rain-2",
+    WeatherSymbol.RAIN_HEAVY: "rain-3",
+    WeatherSymbol.RAIN_SHOWER_LIGHT: "rain-1",
+    WeatherSymbol.RAIN_SHOWER_MODERATE: "rain-2",
+    WeatherSymbol.RAIN_SHOWER_HEAVY: "rain-3",
+    WeatherSymbol.SNOW_LIGHT: "snow-1",
+    WeatherSymbol.SNOW_MODERATE: "snow-2",
+    WeatherSymbol.SNOW_HEAVY: "snow-3",
+    WeatherSymbol.SNOW_SHOWER_LIGHT: "snow-1",
+    WeatherSymbol.SNOW_SHOWER_MODERATE: "snow-2",
+    WeatherSymbol.SNOW_SHOWER_HEAVY: "snow-3",
+    **dict.fromkeys(
+        [
+            WeatherSymbol.THUNDER_LIGHT,
+            WeatherSymbol.THUNDER_MODERATE,
+            WeatherSymbol.THUNDER_HEAVY,
+            WeatherSymbol.THUNDER_SHOWER,
+        ],
+        "thunder",
+    ),
+    **dict.fromkeys(
+        [
+            WeatherSymbol.SLEET_LIGHT,
+            WeatherSymbol.SLEET_MODERATE,
+            WeatherSymbol.SLEET_HEAVY,
+            WeatherSymbol.SLEET_SHOWER_LIGHT,
+            WeatherSymbol.SLEET_SHOWER_MODERATE,
+            WeatherSymbol.SLEET_SHOWER_HEAVY,
+        ],
+        "sleet",
+    ),
+    **dict.fromkeys([WeatherSymbol.FOG, WeatherSymbol.FREEZING_FOG], "fog"),
 }
 
 
@@ -69,7 +121,7 @@ class ForecastHour:
     time: datetime
     temperature: float  # °C
     wind_speed: float  # m/s
-    symbol: int  # WeatherSymbol3 code
+    symbol: WeatherSymbol
     precipitation: float = 0.0  # mm
     icon: str = field(init=False)
 
@@ -243,7 +295,7 @@ async def get_weather(place: str) -> WeatherData:
             time=t,
             temperature=v,
             wind_speed=winds[t],
-            symbol=int(symbols[t]),
+            symbol=WeatherSymbol(int(symbols[t])),
             precipitation=precips.get(t, 0.0),
         )
         for t, v in sorted(temps.items())

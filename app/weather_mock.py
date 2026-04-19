@@ -3,7 +3,7 @@ import random
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from .weather import CurrentWeather, ForecastHour, WeatherData
+from .weather import CurrentWeather, ForecastHour, WeatherData, WeatherSymbol
 
 _RAIN_CHANCE = 0.2
 _HEAVY_RAIN = 4.0
@@ -23,23 +23,23 @@ async def mock_weather(now: datetime, tz: ZoneInfo) -> WeatherData:
     for h in range(48):
         temp = round(day_base[h // 24] + random.uniform(0, 10), 1)
         if precip[h] == 0:
-            symbol = 2
+            symbol = WeatherSymbol.PARTLY_CLOUDY
         elif temp < 0:
             symbol = (
-                41
+                WeatherSymbol.SNOW_LIGHT
                 if precip[h] < _MODERATE_RAIN
-                else 42
+                else WeatherSymbol.SNOW_MODERATE
                 if precip[h] < _HEAVY_RAIN
-                else 43
+                else WeatherSymbol.SNOW_HEAVY
             )
         elif -3 <= temp <= 3:  # noqa: PLR2004
-            symbol = 71  # sleet
+            symbol = WeatherSymbol.SLEET_LIGHT
         elif precip[h] < _MODERATE_RAIN:
-            symbol = 21
+            symbol = WeatherSymbol.RAIN_LIGHT
         elif precip[h] < _HEAVY_RAIN:
-            symbol = 22
+            symbol = WeatherSymbol.RAIN_MODERATE
         else:
-            symbol = 23
+            symbol = WeatherSymbol.RAIN_HEAVY
         forecast.append(
             ForecastHour(
                 time=today.replace(hour=h % 24) + timedelta(days=h // 24),
