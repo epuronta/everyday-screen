@@ -19,6 +19,36 @@ from .weather_mock import mock_weather
 
 log = logging.getLogger(__name__)
 
+_FI_WEEKDAYS = [
+    "maanantai",
+    "tiistai",
+    "keskiviikko",
+    "torstai",
+    "perjantai",
+    "lauantai",
+    "sunnuntai",
+]
+_FI_MONTHS = [
+    "tammikuu",
+    "helmikuu",
+    "maaliskuu",
+    "huhtikuu",
+    "toukokuu",
+    "kesäkuu",
+    "heinäkuu",
+    "elokuu",
+    "syyskuu",
+    "lokakuu",
+    "marraskuu",
+    "joulukuu",
+]
+
+
+def _fi_date(dt: datetime) -> str:
+    month = _FI_MONTHS[dt.month - 1]
+    return f"{_FI_WEEKDAYS[dt.weekday()].capitalize()} {dt.day}.{dt.month}. ({month})"
+
+
 app = FastAPI()
 
 
@@ -57,7 +87,7 @@ def _build_context(  # noqa: PLR0913
     local = now.astimezone(TZ)
     return {
         "time": local.strftime("%H:%M"),
-        "date": local.strftime("%A, %b %d"),
+        "date": _fi_date(local),
         "weather": weather,
         "electricity": electricity,
         "transport": transport,
