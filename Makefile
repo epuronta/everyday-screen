@@ -1,4 +1,4 @@
-.PHONY: install run up start lint screenshot deploy
+.PHONY: install run up start lint fix screenshot deploy
 
 install:
 	uv sync --all-groups
@@ -21,3 +21,7 @@ deploy:
 lint:
 	uv run ruff check .
 	uv run ruff format --check .
+
+fix:
+	uv run ruff check --fix .
+	uv run ruff format .
