@@ -160,6 +160,7 @@
                 {% endfor %}
                 <path d="{{ spark.path_d }}" fill="none" style="stroke:var(--g0)" stroke-width="1.5"/>
                 {% if spark.current_x is not none and spark.current_y is not none %}
+                <line x1="{{ spark.current_x }}" y1="0" x2="{{ spark.current_x }}" y2="{{ spark.height - 14 }}" style="stroke:var(--g0)" stroke-width="1.5"/>
                 <circle cx="{{ spark.current_x }}" cy="{{ spark.current_y }}" r="6" style="fill:var(--g0)"/>
                 {% endif %}
             </svg>
