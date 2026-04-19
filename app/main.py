@@ -15,6 +15,7 @@ from .electricity import get_electricity
 from .renderer import HEIGHT, WIDTH, render
 from .transport import get_transport
 from .weather import get_weather
+from .weather_mock import mock_weather
 
 log = logging.getLogger(__name__)
 
@@ -68,9 +69,9 @@ def _build_context(  # noqa: PLR0913
     }
 
 
-async def _fetch_data() -> tuple:
+async def _fetch_data(now: datetime, *, use_mock_weather: bool = False) -> tuple:
     results = await asyncio.gather(
-        get_weather(settings.FMI_CITY),
+        mock_weather(now, TZ) if use_mock_weather else get_weather(settings.FMI_CITY),
         get_electricity(),
         get_transport(settings.DIGITRANSIT_API_KEY, settings.HSL_STOPS),
         return_exceptions=True,
@@ -91,10 +92,13 @@ async def read_display(
     request: Request,
     width: Annotated[int, Query()] = WIDTH,
     height: Annotated[int, Query()] = HEIGHT,
+    use_mock_weather: Annotated[bool, Query(alias="mock_weather")] = False,  # noqa: FBT002
     _: Annotated[None, Depends(_require_token)] = None,
 ):
     now = datetime.now(tz=UTC)
-    weather, electricity, transport = await _fetch_data()
+    weather, electricity, transport = await _fetch_data(
+        now, use_mock_weather=use_mock_weather
+    )
     return templates.TemplateResponse(
         request,
         "display.html",
@@ -110,7 +114,7 @@ async def _render_display(width: int, height: int) -> Response:
     if entry and entry.is_fresh(now):
         return Response(content=entry.data, media_type="image/png")
 
-    weather, electricity, transport = await _fetch_data()
+    weather, electricity, transport = await _fetch_data(now)
     ctx = _build_context(now, weather, electricity, transport, width, height)
     html = templates.env.get_template("display.html").render(ctx)
     image = await render(html, width, height)

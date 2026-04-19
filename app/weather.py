@@ -56,6 +56,7 @@ class ForecastHour:
     temperature: float  # °C
     wind_speed: float  # m/s
     symbol: int  # WeatherSymbol3 code
+    precipitation: float = 0.0  # mm
     icon: str = field(init=False)
 
     def __post_init__(self) -> None:
@@ -204,7 +205,7 @@ async def get_weather(place: str) -> WeatherData:
                 "starttime": start_of_today.strftime("%Y-%m-%dT%H:%M:%SZ"),
                 "endtime": end_of_day.strftime("%Y-%m-%dT%H:%M:%SZ"),
                 "timestep": "60",
-                "parameters": "Temperature,WindSpeedMS,WeatherSymbol3",
+                "parameters": "Temperature,WindSpeedMS,WeatherSymbol3,Precipitation1h",
             },
         )
         fct_resp.raise_for_status()
@@ -221,9 +222,16 @@ async def get_weather(place: str) -> WeatherData:
     temps = dict(fct.get("Temperature", []))
     winds = dict(fct.get("WindSpeedMS", []))
     symbols = dict(fct.get("WeatherSymbol3", []))
+    precips = dict(fct.get("Precipitation1h", []))
 
     forecast = [
-        ForecastHour(time=t, temperature=v, wind_speed=winds[t], symbol=int(symbols[t]))
+        ForecastHour(
+            time=t,
+            temperature=v,
+            wind_speed=winds[t],
+            symbol=int(symbols[t]),
+            precipitation=precips.get(t, 0.0),
+        )
         for t, v in sorted(temps.items())
         if t in winds and t in symbols
     ]
