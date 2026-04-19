@@ -24,12 +24,22 @@ async def mock_weather(now: datetime, tz: ZoneInfo) -> WeatherData:
         temp = round(day_base[h // 24] + random.uniform(0, 10), 1)
         if precip[h] == 0:
             symbol = 2
+        elif temp < 0:
+            symbol = (
+                41
+                if precip[h] < _MODERATE_RAIN
+                else 42
+                if precip[h] < _HEAVY_RAIN
+                else 43
+            )
+        elif -3 <= temp <= 3:  # noqa: PLR2004
+            symbol = 71  # sleet
         elif precip[h] < _MODERATE_RAIN:
-            symbol = 41 if temp < 0 else 21
+            symbol = 21
         elif precip[h] < _HEAVY_RAIN:
-            symbol = 42 if temp < 0 else 22
+            symbol = 22
         else:
-            symbol = 43 if temp < 0 else 23
+            symbol = 23
         forecast.append(
             ForecastHour(
                 time=today.replace(hour=h % 24) + timedelta(days=h // 24),
