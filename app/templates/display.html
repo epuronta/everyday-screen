@@ -151,11 +151,14 @@
             {% if spark %}
             <svg width="{{ spark.width }}" height="{{ spark.height }}" viewBox="0 0 {{ spark.width }} {{ spark.height }}" style="display:block; margin-top: 0.5rem;">
                 {% for d in spark.dividers %}
-                <line x1="{{ d.x }}" y1="0" x2="{{ d.x }}" y2="{{ spark.height - 14 }}" style="stroke:var(--g4)" stroke-width="1.5"/>
-                <text x="{{ d.x }}" y="{{ spark.height }}" text-anchor="middle" font-size="13" style="fill:var(--g1)" font-weight="600">{{ d.label }}</text>
+                <line x1="{{ d.x }}" y1="0" x2="{{ d.x }}" y2="{{ spark.height - 14 }}" style="stroke:var(--g4)" stroke-width="{{ 3 if d.day_boundary else 1.5 }}"/>
+                <text x="{{ d.x }}" y="{{ spark.height }}" text-anchor="{{ 'start' if d.x == 0 else 'middle' }}" font-size="13" style="fill:var(--g1)" font-weight="600">{{ d.label }}</text>
                 {% endfor %}
-{% for t in spark.thresholds %}
-                <line x1="0" y1="{{ t.y }}" x2="{{ spark.width - 20 }}" y2="{{ t.y }}" style="stroke:var(--g3)" stroke-width="1.5"/>
+<line x1="{{ spark.pad_left }}" y1="0" x2="{{ spark.pad_left }}" y2="{{ spark.height - 14 }}" style="stroke:var(--g3)" stroke-width="1"/>
+                {% for t in spark.thresholds %}
+                <line x1="{{ spark.pad_left }}" y1="{{ t.y }}" x2="{{ spark.width - 20 }}" y2="{{ t.y }}" style="stroke:var(--g3)" stroke-width="1.5"/>
+                <line x1="{{ spark.pad_left - 5 }}" y1="{{ t.y }}" x2="{{ spark.pad_left }}" y2="{{ t.y }}" style="stroke:var(--g2)" stroke-width="1.5"/>
+                <text x="{{ spark.pad_left - 8 }}" y="{{ t.y + 4 }}" text-anchor="end" font-size="13" style="fill:var(--g1)" font-weight="600">{{ t.label }}</text>
                 <text x="{{ spark.width - 16 }}" y="{{ t.y + 4 }}" text-anchor="start" font-size="13" style="fill:var(--g1)" font-weight="600">{{ t.label }}</text>
                 {% endfor %}
                 <path d="{{ spark.path_d }}" fill="none" style="stroke:var(--g0)" stroke-width="1.5"/>

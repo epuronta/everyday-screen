@@ -88,6 +88,7 @@ class ElectricityData:
 
         pad_top = 14  # needs room for the top threshold label (font-size 11)
         pad_bottom = 20  # extra room so the line never collides with hour labels
+        pad_left = 30  # room for left-side y-axis labels
         now_hour = now.astimezone(tz).replace(minute=0, second=0, microsecond=0)
 
         # Fixed 48h window — x position is independent of how much data is available
@@ -95,7 +96,11 @@ class ElectricityData:
         total_seconds = (window_end.astimezone(UTC) - t_start).total_seconds()
 
         def time_to_x(t: datetime) -> float:
-            return round((t - t_start).total_seconds() / total_seconds * width, 1)
+            return round(
+                pad_left
+                + (t - t_start).total_seconds() / total_seconds * (width - pad_left),
+                1,
+            )
 
         def price_to_y(price: float) -> float:
             return round(
@@ -126,10 +131,16 @@ class ElectricityData:
 
         # Dividers at every 2nd hour across the full 48h window
         dividers = []
-        t = midnight + timedelta(hours=2)  # skip hour 0 (left edge)
+        t = midnight
         while t <= window_end:
             x = time_to_x(t.astimezone(UTC))
-            dividers.append({"x": x, "label": str(t.hour)})
+            dividers.append(
+                {
+                    "x": x,
+                    "label": str(t.hour),
+                    "day_boundary": t.hour == 0 and t > midnight,
+                }
+            )
             t += timedelta(hours=2)
 
         return {
@@ -140,6 +151,7 @@ class ElectricityData:
             "dividers": dividers,
             "width": width,
             "height": height,
+            "pad_left": pad_left,
         }
 
 
