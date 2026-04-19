@@ -6,6 +6,8 @@ from zoneinfo import ZoneInfo
 from .weather import CurrentWeather, ForecastHour, WeatherData
 
 _RAIN_CHANCE = 0.2
+_HEAVY_RAIN = 4.0
+_MODERATE_RAIN = 2.0
 
 
 async def mock_weather(now: datetime, tz: ZoneInfo) -> WeatherData:
@@ -20,7 +22,14 @@ async def mock_weather(now: datetime, tz: ZoneInfo) -> WeatherData:
     forecast = []
     for h in range(48):
         temp = round(day_base[h // 24] + random.uniform(0, 10), 1)
-        symbol = (41 if temp < 0 else 31) if precip[h] > 0 else 2
+        if precip[h] == 0:
+            symbol = 2
+        elif precip[h] < _MODERATE_RAIN:
+            symbol = 41 if temp < 0 else 21
+        elif precip[h] < _HEAVY_RAIN:
+            symbol = 42 if temp < 0 else 22
+        else:
+            symbol = 43 if temp < 0 else 23
         forecast.append(
             ForecastHour(
                 time=today.replace(hour=h % 24) + timedelta(days=h // 24),
