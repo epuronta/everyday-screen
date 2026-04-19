@@ -1,6 +1,7 @@
+import math
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from enum import IntEnum
 from zoneinfo import ZoneInfo
 
@@ -140,6 +141,7 @@ class WeatherBlock:
 @dataclass
 class WeatherDay:
     label: str  # "Tänään" / "Huomenna"
+    date: date
     blocks: list[WeatherBlock]
 
 
@@ -157,6 +159,50 @@ class WeatherData:
     @property
     def current_icon(self) -> str:
         return self.forecast[0].icon if self.forecast else "cloudy"
+
+    def rain_chart(self, d: date, tz: ZoneInfo, width: int = 300) -> dict:
+        """Pre-compute SVG stacked-box chart: 1 box per mm of precipitation."""
+        box_h = 8
+        gap = 2
+        slot_h = box_h + gap
+        pad_bottom = 14
+        bar_w = width / 24
+
+        day_precip: dict[int, float] = {
+            f.time.astimezone(tz).hour: f.precipitation
+            for f in self.forecast
+            if f.time.astimezone(tz).date() == d
+        }
+
+        y_max = 5
+        chart_h = y_max * slot_h
+        height = chart_h + pad_bottom
+
+        boxes = []
+        for hour in range(24):
+            n = min(y_max, math.ceil(day_precip.get(hour, 0.0)))
+            x = round(hour * bar_w, 1)
+            w = round(bar_w - 1, 1)
+            for row in range(n):
+                y = round(chart_h - (row + 1) * slot_h + gap, 1)
+                boxes.append({"x": x, "y": y, "w": w, "h": box_h})
+
+        labels = [
+            {"x": round(h * bar_w + bar_w / 2, 1), "label": str(h)}
+            for h in range(0, 24, 3)
+        ]
+
+        grid_lines = [round(h * bar_w, 1) for h in range(1, 24)]
+
+        return {
+            "boxes": boxes,
+            "labels": labels,
+            "grid_lines": grid_lines,
+            "y_max": y_max,
+            "width": width,
+            "height": height,
+            "chart_h": chart_h,
+        }
 
     def day_groups(self, tz: ZoneInfo, now: datetime) -> list[WeatherDay]:
         local_now = now.astimezone(tz)
@@ -181,14 +227,14 @@ class WeatherData:
             )
 
         days = []
-        for date, label in [(today, "Tänään"), (tomorrow, "Huomenna")]:
+        for d, label in [(today, "Tänään"), (tomorrow, "Huomenna")]:
             blocks = [
                 b
-                for b in [_block(date, 6, 12, "Aamu"), _block(date, 12, 20, "Ilta")]
+                for b in [_block(d, 6, 12, "Aamu"), _block(d, 12, 20, "Ilta")]
                 if b is not None
             ]
             if blocks:
-                days.append(WeatherDay(label=label, blocks=blocks))
+                days.append(WeatherDay(label=label, date=d, blocks=blocks))
         return days
 
 

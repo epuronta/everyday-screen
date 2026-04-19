@@ -34,7 +34,7 @@ Each data module has its own in-memory cache: weather 10 min, electricity 1 h, t
 
 **Layout.** CSS grid, 2 columns:
 - Top-left: clock/date
-- Bottom-left: weather — day blocks (Aamu 06–12, Ilta 12–20), labels in Finnish
+- Bottom-left: weather — day blocks (Aamu 06–12, Ilta 12–20) with icons and temp range, plus hourly precipitation chart (stacked boxes, 1/mm, capped at 5mm), labels in Finnish
 - Right: transport departures (up to 5 per stop, greyed out if unreachable given walk time)
 - Bottom full-width: electricity sparkline
 

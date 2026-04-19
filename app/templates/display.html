@@ -59,8 +59,9 @@
         .info-row .unit { font-size: 0.9em; color: var(--g2); }
         .info-row .muted { color: var(--g2); }
 
-        .weather-days { display: flex; gap: 2rem; }
+        .weather-days { display: flex; flex-direction: column; gap: 1.5rem; }
         .weather-day-label { font-size: 1rem; color: var(--g2); margin-bottom: 0.3rem; }
+        .weather-day-body { display: flex; align-items: flex-end; gap: 2rem; }
         .weather-blocks { display: flex; gap: 1.2rem; }
         .weather-block { display: flex; flex-direction: column; gap: 0.2rem; }
         .weather-block-label { font-size: 0.9rem; color: var(--g2); }
@@ -96,16 +97,35 @@
                 {% for day in days %}
                 <div class="weather-day">
                     <div class="weather-day-label">{{ day.label }}</div>
-                    <div class="weather-blocks">
-                        {% for block in day.blocks %}
-                        <div class="weather-block">
-                            <div class="weather-block-label">{{ block.label }}</div>
-                            <div class="weather-block-body">
-                                {% include "icons/" + block.icon + ".svg" %}
-                                <span class="weather-block-temp">{{ block.temp_min | round(0) | int }}&thinsp;—&thinsp;{{ block.temp_max | round(0) | int }}</span>
+                    <div class="weather-day-body">
+                        <div class="weather-blocks">
+                            {% for block in day.blocks %}
+                            <div class="weather-block">
+                                <div class="weather-block-label">{{ block.label }}</div>
+                                <div class="weather-block-body">
+                                    {% include "icons/" + block.icon + ".svg" %}
+                                    <span class="weather-block-temp">{{ block.temp_min | round(0) | int }}&thinsp;—&thinsp;{{ block.temp_max | round(0) | int }}</span>
+                                </div>
                             </div>
+                            {% endfor %}
                         </div>
-                        {% endfor %}
+                        {% set chart = weather.rain_chart(day.date, tz, 330) %}
+                        <div style="display: flex; flex-direction: column;">
+                        <div style="font-size: 0.75rem; color: var(--g2); margin-bottom: 0.2rem;">Sademäärä</div>
+                        <svg width="{{ chart.width }}" height="{{ chart.height }}" viewBox="0 0 {{ chart.width }} {{ chart.height }}">
+                            <line x1="0" y1="{{ chart.chart_h }}" x2="{{ chart.width }}" y2="{{ chart.chart_h }}" stroke="var(--g4)" stroke-width="1"/>
+                            {% for x in chart.grid_lines %}
+                            <line x1="{{ x }}" y1="0" x2="{{ x }}" y2="{{ chart.chart_h }}" stroke="var(--g3)" stroke-width="0.5"/>
+                            {% endfor %}
+                            {% for box in chart.boxes %}
+                            <rect x="{{ box.x }}" y="{{ box.y }}" width="{{ box.w }}" height="{{ box.h }}" fill="var(--g0)"/>
+                            {% endfor %}
+                            {% for lbl in chart.labels %}
+                            <text x="{{ lbl.x }}" y="{{ chart.height }}" text-anchor="middle" font-size="11" fill="var(--g3)">{{ lbl.label }}</text>
+                            {% endfor %}
+
+                        </svg>
+                        </div>
                     </div>
                 </div>
                 {% endfor %}
