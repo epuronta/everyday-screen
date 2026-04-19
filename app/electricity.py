@@ -1,3 +1,4 @@
+import math
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -7,6 +8,7 @@ import httpx
 SPOT_URL = "https://api.spot-hinta.fi/TodayAndDayForward?priceResolution=60"
 CHEAP_THRESHOLD = 5.0  # c/kWh
 EXPENSIVE_THRESHOLD = 15.0  # c/kWh
+
 CACHE_TTL = timedelta(hours=1)
 CATMULL_ROM_TENSION = 0.3
 
@@ -79,13 +81,12 @@ class ElectricityData:
         if not hours:
             return {}
 
-        prices = [h.price for h in hours]
-        min_p = min(prices)
-        max_p = max(prices)
-        if max_p == min_p:
-            max_p = min_p + 1.0
+        max_p = max(h.price for h in hours)
+        y_max = (
+            math.ceil(max_p / 10) * 10 or 10
+        )  # at least 10c so we don't divide by zero
 
-        pad_top = 6
+        pad_top = 14  # needs room for the top threshold label (font-size 11)
         pad_bottom = 20  # extra room so the line never collides with hour labels
         now_hour = now.astimezone(tz).replace(minute=0, second=0, microsecond=0)
 
@@ -98,10 +99,7 @@ class ElectricityData:
 
         def price_to_y(price: float) -> float:
             return round(
-                pad_top
-                + (height - pad_top - pad_bottom)
-                * (1 - (price - min_p) / (max_p - min_p)),
-                1,
+                pad_top + (height - pad_top - pad_bottom) * (1 - price / y_max), 1
             )
 
         pts = []
@@ -122,14 +120,9 @@ class ElectricityData:
         path_d = _catmull_rom_path(pts)
 
         thresholds = []
-        for price, label in [
-            (0.0, "0"),
-            (CHEAP_THRESHOLD, str(CHEAP_THRESHOLD)),
-            (EXPENSIVE_THRESHOLD, str(EXPENSIVE_THRESHOLD)),
-        ]:
-            y = price_to_y(price)
-            if pad_top <= y <= height - pad_bottom:
-                thresholds.append({"y": y, "label": label})
+        for price in range(0, y_max + 1, 10):
+            y = price_to_y(float(price))
+            thresholds.append({"y": y, "label": str(price)})
 
         # Dividers at every 2nd hour across the full 48h window
         dividers = []
