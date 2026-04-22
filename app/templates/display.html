@@ -62,7 +62,7 @@
         .weather-days { display: flex; flex-direction: column; gap: 1.5rem; }
         .weather-day-label { font-size: 1rem; color: var(--g2); margin-bottom: 0.3rem; }
         .weather-day { border-top: 1.5px solid var(--g0); padding-top: 0.5rem; margin-left: -1rem; margin-right: -1rem; padding-left: 1rem; padding-right: 1rem; }
-        .weather-day-body { display: flex; align-items: flex-end; gap: 2rem; }
+        .weather-day-body { display: flex; align-items: flex-start; gap: 2rem; }
         .weather-blocks { display: flex; gap: 1.2rem; }
         .weather-block { display: flex; flex-direction: column; gap: 0.2rem; }
         .weather-block-label { font-size: 0.9rem; color: var(--g2); text-align: center; }
@@ -120,11 +120,11 @@
                         </div>
                         {% set chart = weather.rain_chart(day.date, tz, 330) %}
                         <div style="display: flex; flex-direction: column;">
-                        <div style="font-size: 0.75rem; color: var(--g2); margin-bottom: 0.2rem;">Sademäärä</div>
+                        <div style="font-size: 0.9rem; color: var(--g2); margin-bottom: 0.2rem;">Sademäärä</div>
                         <svg width="{{ chart.width }}" height="{{ chart.height }}" viewBox="0 0 {{ chart.width }} {{ chart.height }}">
                             <line x1="0" y1="{{ chart.chart_h }}" x2="{{ chart.width }}" y2="{{ chart.chart_h }}" stroke="var(--g4)" stroke-width="1"/>
                             {% for x in chart.grid_lines %}
-                            <line x1="{{ x }}" y1="0" x2="{{ x }}" y2="{{ chart.chart_h }}" stroke="var(--g3)" stroke-width="0.5"/>
+                            <line x1="{{ x }}" y1="0" x2="{{ x }}" y2="{{ chart.chart_h }}" stroke="var(--g2)" stroke-width="0.5"/>
                             {% endfor %}
                             {% for box in chart.boxes %}
                             <rect x="{{ box.x }}" y="{{ box.y }}" width="{{ box.w }}" height="{{ box.h }}" fill="var(--g0)"/>

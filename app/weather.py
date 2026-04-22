@@ -175,8 +175,8 @@ class WeatherData:
 
     def rain_chart(self, d: date, tz: ZoneInfo, width: int = 300) -> dict:
         """Pre-compute SVG stacked-box chart: 1 box per mm of precipitation."""
-        box_h = 8
-        gap = 2
+        box_h = 10
+        gap = 4
         slot_h = box_h + gap
         pad_bottom = 14
         bar_w = width / 24
