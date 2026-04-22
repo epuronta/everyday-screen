@@ -68,6 +68,7 @@
         .weather-block-body { display: flex; flex-direction: column; align-items: center; width: 5.5rem; /* fixed: widest case is two-digit negative temps e.g. -23 .. -15 */ }
         .weather-block-body svg { width: 4rem; height: 4rem; }
         .weather-block-temp { font-size: 1.4rem; }
+        .wind-indicator { font-size: 0.85rem; font-weight: bold; color: var(--g1); letter-spacing: -0.05em; text-align: center; margin-top: 2px; }
 
         .stop { margin-bottom: 1.5rem; }
         .stop-name { font-size: 1.3rem; color: var(--g2); margin: 0 0 0.4rem; }
@@ -105,6 +106,9 @@
                                 <div class="weather-block-body">
                                     {% include "icons/" + block.icon + ".svg" %}
                                     <span class="weather-block-temp">{{ block.temp_min | round(0) | int }}&thinsp;..&thinsp;{{ block.temp_max | round(0) | int }}</span>
+                                    <div class="wind-indicator">
+                                        <span>></span><span style="color: {% if block.wind_level >= 2 %}var(--g1){% else %}var(--g5){% endif %}">></span><span style="color: {% if block.wind_level >= 3 %}var(--g1){% else %}var(--g5){% endif %}">></span>
+                                    </div>
                                 </div>
                             </div>
                             {% endfor %}

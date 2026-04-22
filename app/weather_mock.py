@@ -19,6 +19,7 @@ async def mock_weather(now: datetime, tz: ZoneInfo) -> WeatherData:
     day_base = [
         random.uniform(-20, 20) for _ in range(2)
     ]  # base per day, leaving room for +10
+    wind_base = [random.uniform(0, 10) for _ in range(2)]
     forecast = []
     for h in range(48):
         temp = round(day_base[h // 24] + random.uniform(0, 10), 1)
@@ -44,7 +45,9 @@ async def mock_weather(now: datetime, tz: ZoneInfo) -> WeatherData:
             ForecastHour(
                 time=today.replace(hour=h % 24) + timedelta(days=h // 24),
                 temperature=temp,
-                wind_speed=3.0,
+                wind_speed=round(
+                    max(0.0, wind_base[h // 24] + random.uniform(-1.5, 1.5)), 1
+                ),
                 symbol=symbol,
                 precipitation=precip[h],
             )

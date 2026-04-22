@@ -10,6 +10,8 @@ import httpx
 from . import settings
 
 WFS_URL = "https://opendata.fmi.fi/wfs"
+_WIND_MEDIUM_MS = 4  # m/s threshold for medium wind
+_WIND_HIGH_MS = 8  # m/s threshold for high wind
 _TZ = ZoneInfo(settings.TIMEZONE)
 CACHE_TTL = timedelta(minutes=10)
 
@@ -136,6 +138,16 @@ class WeatherBlock:
     temp_min: float  # °C
     temp_max: float  # °C
     icon: str  # worst-case condition in the block
+    wind_speed_max: float  # m/s, peak in block
+    wind_level: int = field(init=False)  # 1=low (<4), 2=medium (4-8), 3=high (>8)
+
+    def __post_init__(self) -> None:
+        if self.wind_speed_max < _WIND_MEDIUM_MS:
+            self.wind_level = 1
+        elif self.wind_speed_max < _WIND_HIGH_MS:
+            self.wind_level = 2
+        else:
+            self.wind_level = 3
 
 
 @dataclass
@@ -222,8 +234,13 @@ class WeatherData:
                 return None
             icon = _worst_icon(in_range)
             temps = [f.temperature for f in in_range]
+            wind_max = max(f.wind_speed for f in in_range)
             return WeatherBlock(
-                label=label, temp_min=min(temps), temp_max=max(temps), icon=icon
+                label=label,
+                temp_min=min(temps),
+                temp_max=max(temps),
+                icon=icon,
+                wind_speed_max=wind_max,
             )
 
         days = []
