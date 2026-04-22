@@ -200,9 +200,16 @@ class WeatherData:
                 y = round(chart_h - (row + 1) * slot_h + gap, 1)
                 boxes.append({"x": x, "y": y, "w": w, "h": box_h})
 
+        rainy = {h for h in range(24) if day_precip.get(h, 0.0) > 0}
+        label_hours = set()
+        for h in range(24):
+            if h in rainy and (h == 0 or h - 1 not in rainy):
+                label_hours.add(h)  # rain sequence starts
+            if h in rainy and h + 1 not in rainy:
+                label_hours.add(h)  # last wet hour in sequence
         labels = [
             {"x": round(h * bar_w + bar_w / 2, 1), "label": str(h)}
-            for h in range(0, 24, 3)
+            for h in sorted(label_hours)
         ]
 
         grid_lines = [round(h * bar_w, 1) for h in range(1, 24)]
