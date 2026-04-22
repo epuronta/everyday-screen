@@ -103,6 +103,7 @@
                             {% for block in day.blocks %}
                             <div class="weather-block">
                                 <div class="weather-block-label">{{ block.label }}</div>
+                                {% if not block.empty %}
                                 <div class="weather-block-body">
                                     {% include "icons/" + block.icon + ".svg" %}
                                     <span class="weather-block-temp">{{ block.temp_min | round(0) | int }}&thinsp;..&thinsp;{{ block.temp_max | round(0) | int }}</span>
@@ -110,6 +111,9 @@
                                         <span>></span><span style="color: {% if block.wind_level >= 2 %}var(--g1){% else %}var(--g5){% endif %}">></span><span style="color: {% if block.wind_level >= 3 %}var(--g1){% else %}var(--g5){% endif %}">></span>
                                     </div>
                                 </div>
+                                {% else %}
+                                <div class="weather-block-body"></div>
+                                {% endif %}
                             </div>
                             {% endfor %}
                         </div>

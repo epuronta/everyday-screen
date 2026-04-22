@@ -139,6 +139,7 @@ class WeatherBlock:
     temp_max: float  # °C
     icon: str  # worst-case condition in the block
     wind_speed_max: float  # m/s, peak in block
+    empty: bool = False  # placeholder when period has passed with no data
     wind_level: int = field(init=False)  # 1=low (<4), 2=medium (4-8), 3=high (>8)
 
     def __post_init__(self) -> None:
@@ -243,14 +244,25 @@ class WeatherData:
                 wind_speed_max=wind_max,
             )
 
+        _placeholder = WeatherBlock(
+            label="Aamu",
+            temp_min=0,
+            temp_max=0,
+            icon="cloudy",
+            wind_speed_max=0,
+            empty=True,
+        )
+
         days = []
         for d, label in [(today, "Tänään"), (tomorrow, "Huomenna")]:
-            blocks = [
-                b
-                for b in [_block(d, 6, 12, "Aamu"), _block(d, 12, 20, "Ilta")]
-                if b is not None
-            ]
-            if blocks:
+            aamu = _block(d, 6, 12, "Aamu")
+            ilta = _block(d, 12, 20, "Ilta")
+            if d == today:
+                # Always keep an Aamu slot so layout stays consistent
+                blocks = [aamu or _placeholder, *([ilta] if ilta else [])]
+            else:
+                blocks = [b for b in [aamu, ilta] if b is not None]
+            if any(not b.empty for b in blocks):
                 days.append(WeatherDay(label=label, date=d, blocks=blocks))
         return days
 
