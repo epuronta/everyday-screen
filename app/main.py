@@ -1,5 +1,7 @@
 import asyncio
 import logging
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -10,7 +12,7 @@ from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.responses import Response
 from fastapi.templating import Jinja2Templates
 
-from . import settings
+from . import renderer, settings
 from .electricity import get_electricity
 from .renderer import HEIGHT, WIDTH, render
 from .transport import get_transport
@@ -49,7 +51,14 @@ def _fi_date(dt: datetime) -> str:
     return f"{_FI_WEEKDAYS[dt.weekday()].capitalize()} {dt.day}.{dt.month}. ({month})"
 
 
-app = FastAPI()
+@asynccontextmanager
+async def _lifespan(_app: FastAPI) -> AsyncGenerator[None]:
+    await renderer.startup()
+    yield
+    await renderer.shutdown()
+
+
+app = FastAPI(lifespan=_lifespan)
 
 
 def _require_token(token: Annotated[str, Query()] = "") -> None:
