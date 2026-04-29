@@ -13,6 +13,7 @@ from fastapi.responses import Response
 from fastapi.templating import Jinja2Templates
 
 from . import renderer, settings
+from .calendar import get_calendar, prepare_display
 from .electricity import get_electricity
 from .renderer import HEIGHT, WIDTH, render
 from .transport import get_transport
@@ -85,11 +86,16 @@ _image_cache: dict[tuple[int, int, str], _CacheEntry] = {}
 TZ = ZoneInfo(settings.TIMEZONE)
 
 
+async def _empty() -> list:
+    return []
+
+
 def _build_context(  # noqa: PLR0913
     now: datetime,
     weather: object,
     electricity: object,
     transport: object,
+    calendar: object,
     width: int,
     height: int,
 ) -> dict:
@@ -100,6 +106,9 @@ def _build_context(  # noqa: PLR0913
         "weather": weather,
         "electricity": electricity,
         "transport": transport,
+        "calendar": prepare_display(calendar, now, TZ, _FI_WEEKDAYS)
+        if calendar
+        else [],
         "now": now,
         "tz": TZ,
         "timedelta": timedelta,
@@ -113,9 +122,10 @@ async def _fetch_data(now: datetime, *, use_mock_weather: bool = False) -> tuple
         mock_weather(now, TZ) if use_mock_weather else get_weather(settings.FMI_CITY),
         get_electricity(),
         get_transport(settings.DIGITRANSIT_API_KEY, settings.HSL_STOPS),
+        get_calendar(settings.GCAL_ICAL_URL) if settings.GCAL_ICAL_URL else _empty(),
         return_exceptions=True,
     )
-    names = ("weather", "electricity", "transport")
+    names = ("weather", "electricity", "transport", "calendar")
     out = []
     for name, result in zip(names, results, strict=True):
         if isinstance(result, Exception):
@@ -135,13 +145,13 @@ async def read_display(
     _: Annotated[None, Depends(_require_token)] = None,
 ):
     now = datetime.now(tz=UTC)
-    weather, electricity, transport = await _fetch_data(
+    weather, electricity, transport, calendar = await _fetch_data(
         now, use_mock_weather=use_mock_weather
     )
     return templates.TemplateResponse(
         request,
         "display.html",
-        _build_context(now, weather, electricity, transport, width, height),
+        _build_context(now, weather, electricity, transport, calendar, width, height),
     )
 
 
@@ -153,8 +163,8 @@ async def _render_display(width: int, height: int) -> Response:
     if entry and entry.is_fresh(now):
         return Response(content=entry.data, media_type="image/png")
 
-    weather, electricity, transport = await _fetch_data(now)
-    ctx = _build_context(now, weather, electricity, transport, width, height)
+    weather, electricity, transport, calendar = await _fetch_data(now)
+    ctx = _build_context(now, weather, electricity, transport, calendar, width, height)
     html = templates.env.get_template("display.html").render(ctx)
     image = await render(html, width, height)
 

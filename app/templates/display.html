@@ -33,31 +33,25 @@
             padding: 2rem;
             display: grid;
             grid-template-columns: 1fr 1fr;
-            grid-template-rows: auto auto 1fr;
+            grid-template-rows: 1fr 220px;
             grid-template-areas:
-                "clock        transport"
-                "weather      transport"
+                "weather  right"
                 "electricity  electricity";
         }
         .cell {
             padding: 1rem;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: flex-start;
         }
-        .cell-clock         { grid-area: clock; border-right: 2px solid var(--g0); }
         .cell-weather       { grid-area: weather; border-right: 2px solid var(--g0); }
-        .cell-electricity   { grid-area: electricity; border-top: 2px solid var(--g0); padding-bottom: 2rem; }
-        .cell-transport     { grid-area: transport; justify-content: flex-start; }
+        .cell-right         { grid-area: right; }
+        .cell-electricity   { grid-area: electricity; border-top: 2px solid var(--g0); }
 
-        .clock-date { font-size: 2.5rem; margin: 0; }
+        .display-date { font-size: 2.2rem; margin: 0 0 1.2rem 0; }
         .footer { position: absolute; bottom: 8px; right: 12px; font-size: 1rem; color: var(--g3); }
 
-        .info-row { font-size: 1.8rem; margin: 0.4rem 0; display: flex; align-items: flex-end; gap: 0.5rem; }
-        .info-row-inset { padding-left: 2rem; padding-bottom: 2rem; }
-        .info-row svg { width: 2.2rem; height: 2.2rem; flex-shrink: 0; align-self: center; }
-        .info-row .unit { font-size: 0.9em; color: var(--g2); }
-        .info-row .muted { color: var(--g2); }
+        .info-row { font-size: 1.8rem; margin: 0.4rem 0; }
 
         .weather-days { display: flex; flex-direction: column; gap: 1.5rem; }
         .weather-day-label { font-size: 1rem; color: var(--g2); margin-bottom: 0.3rem; }
@@ -71,9 +65,17 @@
         .weather-block-temp { font-size: 1.4rem; }
         .wind-indicator { font-size: 0.85rem; font-weight: bold; color: var(--g1); letter-spacing: -0.05em; text-align: center; margin-top: 2px; }
 
-        .stop { margin-bottom: 1.5rem; }
-        .stop-name { font-size: 1.3rem; color: var(--g2); margin: 0 0 0.4rem; }
-        .departure { font-size: 1.6rem; margin: 0.25rem 0; display: flex; gap: 1rem; }
+        .calendar-events { display: flex; flex-direction: column; gap: 0.3rem; }
+        .cal-day-label { font-size: 0.85rem; color: var(--g2); margin-top: 0.5rem; }
+        .cal-day-label:first-child { margin-top: 0; }
+        .cal-event { font-size: 1.2rem; display: flex; gap: 0.5rem; align-items: baseline; }
+        .cal-event-time { color: var(--g2); white-space: nowrap; min-width: 3.5rem; }
+        .cal-event-title { flex: 1; }
+
+        .section-divider { border: none; border-top: 1.5px solid var(--g4); margin: 0.8rem 0; }
+
+        .stop + .stop { margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid var(--g5); }
+        .departure { font-size: 1.2rem; margin: 0.2rem 0; display: flex; gap: 0.5rem; align-items: baseline; }
         .dep-line { font-weight: bold; min-width: 3.5rem; }
         .dep-headsign { flex: 1; }
         .dep-time { color: var(--g1); white-space: nowrap; }
@@ -85,13 +87,9 @@
 <body>
     <div class="display">
 
-        <!-- Clock -->
-        <div class="cell cell-clock">
-            <p class="clock-date">{{ date }}</p>
-        </div>
-
         <!-- Weather -->
         <div class="cell cell-weather">
+            <p class="display-date">{{ date }}</p>
             {% if weather %}
             {% set days = weather.day_groups(tz, now) %}
             {% if days %}
@@ -149,14 +147,7 @@
         <div class="cell cell-electricity">
             {% if electricity %}
             {% set spot = electricity.current(now, tz) %}
-            {% if spot %}
-            <div class="info-row info-row-inset">
-                <span class="muted" style="font-size: 0.7em;">Sähkö nyt</span>
-                <span>{{ spot.price | round(0, 'ceil') | int }}<span class="unit">c</span></span>
-                {% include "icons/elec-" + electricity.classify(spot.price) + ".svg" %}
-            </div>
-            {% endif %}
-            {% set spark = electricity.sparkline(now, tz, (width - 96) | int, (height / 4 - 48) | int) %}
+            {% set spark = electricity.sparkline(now, tz, (width - 96) | int, 160) %}
             {% if spark %}
             <svg width="{{ spark.width }}" height="{{ spark.height }}" viewBox="0 0 {{ spark.width }} {{ spark.height }}" style="display:block; margin-top: 0.5rem;">
                 {% for d in spark.dividers %}
@@ -174,6 +165,10 @@
                 {% if spark.current_x is not none and spark.current_y is not none %}
                 <line x1="{{ spark.current_x }}" y1="0" x2="{{ spark.current_x }}" y2="{{ spark.height - 14 }}" style="stroke:var(--g0)" stroke-width="1.5"/>
                 <circle cx="{{ spark.current_x }}" cy="{{ spark.current_y }}" r="6" style="fill:var(--g0)"/>
+                {% if spot %}
+                <rect x="{{ spark.current_x - 20 }}" y="1" width="40" height="14" fill="var(--g7)"/>
+                <text x="{{ spark.current_x }}" y="12" text-anchor="middle" font-size="13" font-weight="bold" fill="var(--g0)">{{ spot.price | round(0, 'ceil') | int }}c{% if electricity.classify(spot.price) == 'cheap' %} ↓{% elif electricity.classify(spot.price) == 'expensive' %} ↑{% endif %}</text>
+                {% endif %}
                 {% endif %}
             </svg>
             {% endif %}
@@ -182,22 +177,39 @@
             {% endif %}
         </div>
 
-        <!-- Transport -->
-        <div class="cell cell-transport">
+        <!-- Right: calendar + transport -->
+        <div class="cell cell-right">
+            {% if calendar %}
+            <div class="calendar-events">
+                {% for day in calendar %}
+                <div class="cal-day-label">{{ day.label }}</div>
+                {% for event in day.events %}
+                <div class="cal-event">
+                    <span class="cal-event-time">{{ event.time_label }}</span>
+                    <span class="cal-event-title">{{ event.title }}</span>
+                </div>
+                {% endfor %}
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% if calendar and transport %}
+            <hr class="section-divider">
+            {% endif %}
             {% if transport %}
             {% for stop in transport %}
             <div class="stop">
-                <p class="stop-name" title="{{ stop.stop_id }}">{{ stop.stop_name }}</p>
                 {% set walk = timedelta(minutes=stop.walk_time_minutes) %}
                 {% set ns = namespace(shown=0) %}
                 {% for dep in stop.departures %}
-                {% if ns.shown < 5 and dep.time > now + walk / 2 %}
+                {% if dep.time > now + walk / 2 %}
+                {% if ns.shown < 4 and (dep.time <= now + timedelta(minutes=40) or ns.shown == 0) %}
                 {% set ns.shown = ns.shown + 1 %}
                 <div class="departure{% if dep.time <= now + walk %} unreachable{% endif %}">
                     <span class="dep-line">{{ dep.line }}</span>
                     <span class="dep-headsign">{{ dep.headsign }}</span>
                     <span class="dep-time">{{ dep.time.astimezone(tz).strftime("%H:%M") }}</span>
                 </div>
+                {% endif %}
                 {% endif %}
                 {% endfor %}
             </div>

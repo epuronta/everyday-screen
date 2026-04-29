@@ -20,3 +20,6 @@ HSL_STOPS = [
     StopConfig("H0062", lines={"561", "560", "54"}, walk_time_minutes=5),
     StopConfig("H2041"),
 ]
+
+# Secret iCal URL from Google Calendar settings — leave empty to disable
+GCAL_ICAL_URL = ""
