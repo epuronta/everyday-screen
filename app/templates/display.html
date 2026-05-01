@@ -49,39 +49,45 @@
         .cell-electricity   { grid-area: electricity; border-top: 2px solid var(--g0); }
 
         .display-date { font-size: 2.2rem; margin: 0 0 1.2rem 0; }
-        .footer { position: absolute; bottom: 8px; right: 12px; font-size: 1rem; color: var(--g3); }
+        .footer { position: absolute; bottom: 8px; right: 12px; }
 
         .info-row { font-size: 1.8rem; margin: 0.4rem 0; }
 
         .weather-days { display: flex; flex-direction: column; gap: 1.5rem; }
-        .weather-day-label { font-size: 1rem; color: var(--g2); margin-bottom: 0.3rem; }
+        .weather-day-label { margin-bottom: 0.3rem; }
         .weather-day { border-top: 1.5px solid var(--g0); padding-top: 0.5rem; margin-left: -1rem; margin-right: -1rem; padding-left: 1rem; padding-right: 1rem; }
         .weather-day-body { display: flex; align-items: flex-start; gap: 2rem; }
         .weather-blocks { display: flex; gap: 1.2rem; }
         .weather-block { display: flex; flex-direction: column; gap: 0.2rem; }
-        .weather-block-label { font-size: 0.9rem; color: var(--g2); text-align: center; }
+        .weather-block-label { text-align: center; }
         .weather-block-body { display: flex; flex-direction: column; align-items: center; width: 5.5rem; /* fixed: widest case is two-digit negative temps e.g. -23 .. -15 */ }
         .weather-block-body svg { width: 4rem; height: 4rem; }
         .weather-block-temp { font-size: 1.4rem; }
         .wind-indicator { font-size: 0.85rem; font-weight: bold; color: var(--g1); letter-spacing: -0.05em; text-align: center; margin-top: 2px; }
 
         .calendar-events { display: flex; flex-direction: column; gap: 0.3rem; }
-        .cal-day-label { font-size: 0.85rem; color: var(--g2); margin-top: 0.5rem; }
+        .cal-day-label { margin-top: 0.5rem; }
         .cal-day-label:first-child { margin-top: 0; }
         .cal-event { font-size: 1.2rem; display: flex; gap: 0.5rem; align-items: baseline; }
-        .cal-event-time { color: var(--g2); white-space: nowrap; min-width: 3.5rem; }
+        .cal-event-time { white-space: nowrap; min-width: 3.5rem; }
         .cal-event-title { flex: 1; }
 
         .section-divider { border: none; border-top: 1.5px solid var(--g4); margin: 0.8rem 0; }
 
         .stop + .stop { margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid var(--g5); }
         .departure { font-size: 1.2rem; margin: 0.2rem 0; display: flex; gap: 0.5rem; align-items: baseline; }
-        .dep-line { font-weight: bold; min-width: 3.5rem; }
+        .dep-line { min-width: 3.5rem; }
         .dep-headsign { flex: 1; }
-        .dep-time { color: var(--g1); white-space: nowrap; }
+        .dep-time { white-space: nowrap; }
         .departure.unreachable { color: var(--g3); }
         .departure.unreachable .dep-time { color: var(--g3); }
-        .unavailable { color: var(--g2); font-size: 1.6rem; }
+        .unavailable { font-size: 1.6rem; }
+
+        /* Semantic text tiers — use these for all text elements */
+        .text-primary   { color: var(--g0); font-weight: bold; }
+        .text-secondary { color: var(--g2); }
+        .text-label     { color: var(--g2); font-size: 0.85rem; }
+        .text-ghost     { color: var(--g3); font-size: 0.9rem; }
     </style>
 </head>
 <body>
@@ -96,12 +102,12 @@
             <div class="weather-days">
                 {% for day in days %}
                 <div class="weather-day">
-                    <div class="weather-day-label">{{ day.label }}</div>
+                    <div class="weather-day-label text-label">{{ day.label }}</div>
                     <div class="weather-day-body">
                         <div class="weather-blocks">
                             {% for block in day.blocks %}
                             <div class="weather-block">
-                                <div class="weather-block-label">{{ block.label }}</div>
+                                <div class="weather-block-label text-label">{{ block.label }}</div>
                                 {% if not block.empty %}
                                 <div class="weather-block-body">
                                     {% include "icons/" + block.icon + ".svg" %}
@@ -118,7 +124,7 @@
                         </div>
                         {% set chart = weather.rain_chart(day.date, tz, 330) %}
                         <div style="display: flex; flex-direction: column;">
-                        <div style="font-size: 0.9rem; color: var(--g2); margin-bottom: 0.2rem;">Sademäärä</div>
+                        <div class="text-label" style="margin-bottom: 0.2rem;">Sademäärä</div>
                         <svg width="{{ chart.width }}" height="{{ chart.height }}" viewBox="0 0 {{ chart.width }} {{ chart.height }}">
                             <line x1="0" y1="{{ chart.chart_h }}" x2="{{ chart.width }}" y2="{{ chart.chart_h }}" stroke="var(--g4)" stroke-width="1"/>
                             {% for x in chart.grid_lines %}
@@ -139,7 +145,7 @@
             </div>
             {% endif %}
             {% else %}
-            <div class="info-row unavailable">Weather unavailable</div>
+            <div class="info-row unavailable text-secondary">Weather unavailable</div>
             {% endif %}
         </div>
 
@@ -173,7 +179,7 @@
             </svg>
             {% endif %}
             {% else %}
-            <div class="info-row unavailable">Electricity unavailable</div>
+            <div class="info-row unavailable text-secondary">Electricity unavailable</div>
             {% endif %}
         </div>
 
@@ -182,10 +188,10 @@
             {% if calendar %}
             <div class="calendar-events">
                 {% for day in calendar %}
-                <div class="cal-day-label">{{ day.label }}</div>
+                <div class="cal-day-label text-label">{{ day.label }}</div>
                 {% for event in day.events %}
                 <div class="cal-event">
-                    <span class="cal-event-time">{{ event.time_label }}</span>
+                    <span class="cal-event-time text-secondary">{{ event.time_label }}</span>
                     <span class="cal-event-title">{{ event.title }}</span>
                 </div>
                 {% endfor %}
@@ -205,7 +211,7 @@
                 {% if ns.shown < 4 and (dep.time <= now + timedelta(minutes=40) or ns.shown == 0) %}
                 {% set ns.shown = ns.shown + 1 %}
                 <div class="departure{% if dep.time <= now + walk %} unreachable{% endif %}">
-                    <span class="dep-line">{{ dep.line }}</span>
+                    <span class="dep-line text-primary">{{ dep.line }}</span>
                     <span class="dep-headsign">{{ dep.headsign }}</span>
                     <span class="dep-time">{{ dep.time.astimezone(tz).strftime("%H:%M") }}</span>
                 </div>
@@ -215,11 +221,11 @@
             </div>
             {% endfor %}
             {% else %}
-            <p class="unavailable">Transport unavailable</p>
+            <p class="unavailable text-secondary">Transport unavailable</p>
             {% endif %}
         </div>
 
-        <div class="footer">Refreshed {{ time }}</div>
+        <div class="footer text-ghost">Refreshed {{ time }}</div>
     </div>
 </body>
 </html>

@@ -40,6 +40,28 @@ Each data module has its own in-memory cache: weather 10 min, electricity 1 h, t
 
 **Electricity sparkline.** 48h fixed window (today 00:00 → tomorrow 23:00). Y-axis runs 0 → max price rounded up to next 10c, with grid lines every 10c. `CHEAP_THRESHOLD` / `EXPENSIVE_THRESHOLD` are only used for `classify()` (the icon next to the current price), not for chart lines.
 
+## E-ink legibility
+
+The physical display looks significantly different from a browser preview. Light grays that read fine in the browser become marginal or invisible on e-ink. `make screenshot` is not a reliable proxy — when in doubt, check against the device.
+
+Two factors dominate legibility on this display:
+
+- **Font weight.** Bold is clearly readable at distance; regular weight at small sizes largely disappears. Bold is not decoration — it's required for anything the user needs to actually read.
+- **Gray shade.** Treat `--g3` and lighter as invisible for practical purposes. `--g0`/`--g1` for readable content, `--g2` for secondary content. Anything lighter is separator-level at best.
+
+**Default to dark + bold** when adding new elements. Pull back only if there's a specific reason — don't start from light/small and hope it's fine.
+
+**Text tier classes** implement these rules. Use them on all text elements instead of raw `--gN` variables:
+
+| Class | Use for | Properties |
+|---|---|---|
+| `.text-primary` | Key info the user must read (line numbers, identifiers) | `--g0`, bold |
+| `.text-secondary` | Supporting info, readable but not primary (event times, headsigns) | `--g2` |
+| `.text-label` | Section separator labels (day names, period headers) — decorative | `--g2`, 0.85rem |
+| `.text-ghost` | Status text where invisibility at distance is acceptable | `--g3`, 0.9rem |
+
+Default body text (inheriting `--g0`) needs no class. SVG text uses `fill` not `color` — set `fill` values directly.
+
 ## Running locally
 
 ```bash

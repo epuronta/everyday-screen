@@ -7,12 +7,6 @@ Things noticed but left alone — wrong scope, not urgent.
 Every now and then (last executed: unknown), update uv dependencies. Update, verify that it works and create a feature branch out of it for me to verify.
 
 
-## Colors, font sizes, legibility
-
-Anything lighter than --g3 is practically invisible on the screen and thus unusable in practice. Generally, prefer "surely dark enough" over "just about visible".
-
-Ask the user to submit a photo of the physical display. Analyze that to understand the apparent visibility of font sizes, colors and boldness. As an output, emit guidelines for development that you can follow later on.
-
 
 ## `_image_cache` type annotation wrong
 
