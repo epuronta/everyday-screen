@@ -76,11 +76,11 @@
 
         .stop + .stop { margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid var(--g5); }
         .departure { font-size: 1.2rem; margin: 0.2rem 0; display: flex; gap: 0.5rem; align-items: baseline; }
-        .dep-line { min-width: 3.5rem; }
+        .dep-time { white-space: nowrap; min-width: 3.5rem; }
+        .dep-line { min-width: 3rem; }
         .dep-headsign { flex: 1; }
-        .dep-time { white-space: nowrap; }
         .departure.unreachable { color: var(--g3); }
-        .departure.unreachable .dep-time { color: var(--g3); }
+        .departure.unreachable .text-primary { color: var(--g3); }
         .unavailable { font-size: 1.6rem; }
 
         /* Semantic text tiers — use these for all text elements */
@@ -211,9 +211,9 @@
                 {% if ns.shown < 4 and (dep.time <= now + timedelta(minutes=40) or ns.shown == 0) %}
                 {% set ns.shown = ns.shown + 1 %}
                 <div class="departure{% if dep.time <= now + walk %} unreachable{% endif %}">
+                    <span class="dep-time text-primary">{{ dep.time.astimezone(tz).strftime("%H:%M") }}</span>
                     <span class="dep-line text-primary">{{ dep.line }}</span>
                     <span class="dep-headsign">{{ dep.headsign }}</span>
-                    <span class="dep-time">{{ dep.time.astimezone(tz).strftime("%H:%M") }}</span>
                 </div>
                 {% endif %}
                 {% endif %}
