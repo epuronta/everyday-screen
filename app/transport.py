@@ -7,6 +7,10 @@ import httpx
 DIGITRANSIT_URL = "https://api.digitransit.fi/routing/v2/hsl/gtfs/v1"
 CACHE_TTL = timedelta(seconds=1)
 
+# Fixed by display space — not user-configurable
+DEPARTURE_CAP = 4
+DEPARTURE_LOOKAHEAD = timedelta(minutes=40)
+
 _CODE_RESOLVE_QUERY = """
 { stops { code gtfsId } }
 """

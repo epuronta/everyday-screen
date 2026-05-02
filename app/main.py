@@ -16,7 +16,7 @@ from . import renderer, settings
 from .calendar import get_calendar, prepare_display
 from .electricity import get_electricity
 from .renderer import HEIGHT, WIDTH, render
-from .transport import get_transport
+from .transport import DEPARTURE_CAP, DEPARTURE_LOOKAHEAD, get_transport
 from .weather import get_weather
 from .weather_mock import mock_weather
 
@@ -112,6 +112,8 @@ def _build_context(  # noqa: PLR0913
         "now": now,
         "tz": TZ,
         "timedelta": timedelta,
+        "departure_cap": DEPARTURE_CAP,
+        "departure_lookahead": DEPARTURE_LOOKAHEAD,
         "width": width,
         "height": height,
     }

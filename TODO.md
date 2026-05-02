@@ -8,12 +8,6 @@ Every now and then (last executed: unknown), update uv dependencies. Update, ver
 
 
 
-## Transport magic numbers buried in template
-
-`display.html`: departure cap (`ns.shown < 4`) and lookahead window
-(`timedelta(minutes=40)`) are magic numbers in Jinja2. They belong as
-Python-level constants alongside the stop config.
-
 ## `?futureevents=true` lives in the settings URL
 
 The query param that filters the iCal feed to future-only events is

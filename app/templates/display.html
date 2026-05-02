@@ -208,7 +208,7 @@
                 {% set ns = namespace(shown=0) %}
                 {% for dep in stop.departures %}
                 {% if dep.time > now + walk / 2 %}
-                {% if ns.shown < 4 and (dep.time <= now + timedelta(minutes=40) or ns.shown == 0) %}
+                {% if ns.shown < departure_cap and (dep.time <= now + departure_lookahead or ns.shown == 0) %}
                 {% set ns.shown = ns.shown + 1 %}
                 <div class="departure{% if dep.time <= now + walk %} unreachable{% endif %}">
                     <span class="dep-time text-primary">{{ dep.time.astimezone(tz).strftime("%H:%M") }}</span>
