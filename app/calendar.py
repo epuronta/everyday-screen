@@ -126,14 +126,23 @@ def prepare_display(
     return groups
 
 
+def _ensure_future_events(url: str) -> str:
+    # Needed for Google Calendar feeds; skip if the caller already included it
+    if "futureevents=" in url:
+        return url
+    sep = "&" if "?" in url else "?"
+    return f"{url}{sep}futureevents=true"
+
+
 async def get_calendar(ical_url: str) -> list[CalendarEvent]:
     now = datetime.now(tz=UTC)
 
     if _cache.is_fresh(now):
         return _cache.data  # type: ignore[return-value]
 
+    url = _ensure_future_events(ical_url)
     async with httpx.AsyncClient() as client:
-        resp = await client.get(ical_url, follow_redirects=True, timeout=10)
+        resp = await client.get(url, follow_redirects=True, timeout=10)
         resp.raise_for_status()
 
     today = now.date()
