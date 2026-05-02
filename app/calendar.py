@@ -111,6 +111,8 @@ def prepare_display(
 
     for event in events[:_MAX_EVENTS]:
         event_date = event.start.astimezone(tz).date()
+        if event.all_day and event_date < today:
+            event_date = today
         label = _day_label(event_date, today, fi_weekdays)
 
         if not groups or groups[-1].label != label:

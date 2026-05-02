@@ -20,9 +20,3 @@ append it transparently so the settings value is just the base URL.
 A weekly recurring event will appear once (or not at all if the base
 date is past). Needs `rrulestr` expansion from the `icalendar` library.
 
-## Calendar: multi-day all-day events group under start date
-
-An event spanning Mon–Thu that started before today is included but
-grouped under its start date, which may be in the past. Should appear
-under today instead when it's already in progress.
-
