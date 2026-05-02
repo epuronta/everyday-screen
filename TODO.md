@@ -26,8 +26,3 @@ An event spanning Mon–Thu that started before today is included but
 grouped under its start date, which may be in the past. Should appear
 under today instead when it's already in progress.
 
-## Calendar: `_MAX_EVENTS` slices before grouping by day
-
-Today+tomorrow visibility is not guaranteed — 5 events on the same day
-would consume the cap and hide tomorrow. Should ensure at least one day
-boundary is crossed before cutting off.
