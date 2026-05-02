@@ -8,12 +8,6 @@ Every now and then (last executed: unknown), update uv dependencies. Update, ver
 
 
 
-## `_image_cache` type annotation wrong
-
-`main.py`: annotated as `dict[tuple[int, int, str], _CacheEntry]` but
-keyed as `(width, height)` — a 2-tuple, not 3-tuple. Pre-existing, no
-runtime impact.
-
 ## Transport magic numbers buried in template
 
 `display.html`: departure cap (`ns.shown < 4`) and lookahead window

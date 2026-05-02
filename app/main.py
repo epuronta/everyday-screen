@@ -80,7 +80,7 @@ class _CacheEntry:
         return now - self.time < IMAGE_CACHE_TTL
 
 
-_image_cache: dict[tuple[int, int, str], _CacheEntry] = {}
+_image_cache: dict[tuple[int, int], _CacheEntry] = {}
 
 
 TZ = ZoneInfo(settings.TIMEZONE)
