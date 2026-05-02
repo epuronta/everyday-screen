@@ -14,9 +14,3 @@ The query param that filters the iCal feed to future-only events is
 manually appended to `GCAL_ICAL_URL` in settings. `calendar.py` could
 append it transparently so the settings value is just the base URL.
 
-## Calendar: recurring events not expanded
-
-`icalendar` only sees the base VEVENT, not individual occurrences.
-A weekly recurring event will appear once (or not at all if the base
-date is past). Needs `rrulestr` expansion from the `icalendar` library.
-

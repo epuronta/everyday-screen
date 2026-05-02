@@ -3,10 +3,11 @@ from datetime import UTC, date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 import httpx
+from dateutil.rrule import rrulestr
 from icalendar import Calendar
 
 CACHE_TTL = timedelta(minutes=5)
-_LOOKAHEAD_DAYS = 14
+_LOOKAHEAD_DAYS = 7
 _MAX_EVENTS = 5
 
 
@@ -50,6 +51,70 @@ def _to_utc_datetime(dt: datetime | date) -> datetime:
     return datetime(dt.year, dt.month, dt.day, tzinfo=UTC)
 
 
+def _expand_recurring(
+    component: object, today: date, horizon: date
+) -> list[CalendarEvent]:
+    dtstart_prop = component.get("DTSTART")  # type: ignore[union-attr]
+    dtend_prop = component.get("DTEND")  # type: ignore[union-attr]
+    rrule_prop = component.get("RRULE")  # type: ignore[union-attr]
+
+    if dtstart_prop is None or rrule_prop is None:
+        return []
+
+    raw_start = dtstart_prop.dt
+    raw_end = dtend_prop.dt if dtend_prop else raw_start
+    all_day = isinstance(raw_start, date) and not isinstance(raw_start, datetime)
+
+    start_utc = _to_utc_datetime(raw_start)
+    end_utc = _to_utc_datetime(raw_end)
+    duration = end_utc - start_utc
+
+    try:
+        rule = rrulestr(f"RRULE:{rrule_prop.to_ical().decode()}", dtstart=start_utc)
+    except Exception:  # noqa: BLE001
+        return []
+
+    exdates: set[datetime] = set()
+    exdate_prop = component.get("EXDATE")  # type: ignore[union-attr]
+    if exdate_prop:
+        if not isinstance(exdate_prop, list):
+            exdate_prop = [exdate_prop]
+        for exd in exdate_prop:
+            for d in exd.dts:
+                exdates.add(_to_utc_datetime(d.dt))
+
+    window_start = datetime(today.year, today.month, today.day, tzinfo=UTC)
+    window_end = datetime(
+        horizon.year, horizon.month, horizon.day, 23, 59, 59, tzinfo=UTC
+    )
+
+    events = []
+    for occ in rule.between(window_start, window_end, inc=True):
+        occ_start = occ if occ.tzinfo else occ.replace(tzinfo=UTC)
+        if occ_start in exdates:
+            continue
+        occ_end = occ_start + duration
+        occ_start_date = occ_start.date()
+        occ_end_date = occ_end.date()
+
+        if not (
+            today <= occ_start_date <= horizon
+            or (occ_start_date < today and occ_end_date > today)
+        ):
+            continue
+
+        events.append(
+            CalendarEvent(
+                title=str(component.get("SUMMARY", "")),  # type: ignore[union-attr]
+                start=occ_start,
+                end=occ_end,
+                all_day=all_day,
+            )
+        )
+
+    return events
+
+
 def _parse_events(raw: bytes, today: date) -> list[CalendarEvent]:
     cal = Calendar.from_ical(raw)
     events: list[CalendarEvent] = []
@@ -57,6 +122,10 @@ def _parse_events(raw: bytes, today: date) -> list[CalendarEvent]:
 
     for component in cal.walk():
         if component.name != "VEVENT":
+            continue
+
+        if component.get("RRULE"):
+            events.extend(_expand_recurring(component, today, horizon))
             continue
 
         dtstart = component.get("DTSTART")
