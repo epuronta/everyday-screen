@@ -8,9 +8,4 @@ Every now and then (last executed: 2026-05-02), update uv dependencies. Update, 
 
 
 
-## `?futureevents=true` lives in the settings URL
-
-The query param that filters the iCal feed to future-only events is
-manually appended to `GCAL_ICAL_URL` in settings. `calendar.py` could
-append it transparently so the settings value is just the base URL.
 
