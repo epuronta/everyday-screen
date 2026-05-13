@@ -23,3 +23,15 @@ HSL_STOPS = [
 
 # Secret iCal URL from Google Calendar settings — leave empty to disable
 GCAL_ICAL_URL = ""
+
+# Compass Group / Amica restaurant page URL — leave empty to disable
+AMICA_URL = ""
+AMICA_LABEL = ""
+
+# Aromi (aromi.hel.fi) school lunch — leave empty to disable
+# api_path: from the browser network inspector on the restaurant's Angular page
+# restaurant_id and diner_group_id: GUIDs visible in the request URL / body
+AROMI_URL = ""
+AROMI_RESTAURANT_ID = ""
+AROMI_DINER_GROUP_ID = ""
+AROMI_LABEL = ""

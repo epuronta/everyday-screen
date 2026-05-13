@@ -33,9 +33,10 @@
             padding: 2rem;
             display: grid;
             grid-template-columns: 1fr 1fr;
-            grid-template-rows: 1fr 220px;
+            grid-template-rows: 1fr 140px 220px;
             grid-template-areas:
-                "weather  right"
+                "weather      right"
+                "menu         right"
                 "electricity  electricity";
         }
         .cell {
@@ -45,6 +46,7 @@
             justify-content: flex-start;
         }
         .cell-weather       { grid-area: weather; border-right: 2px solid var(--g0); }
+        .cell-menu          { grid-area: menu; border-right: 2px solid var(--g0); border-top: 1.5px solid var(--g4); overflow: hidden; }
         .cell-right         { grid-area: right; }
         .cell-electricity   { grid-area: electricity; border-top: 2px solid var(--g0); }
 
@@ -82,6 +84,9 @@
         .departure.unreachable { color: var(--g3); }
         .departure.unreachable .text-primary { color: var(--g3); }
         .unavailable { font-size: 1.6rem; }
+
+        .menu-section + .menu-section { margin-top: 0.5rem; }
+        .menu-dishes { font-size: 1.2rem; }
 
         /* Semantic text tiers — use these for all text elements */
         .text-primary   { color: var(--g0); font-weight: bold; }
@@ -147,6 +152,17 @@
             {% else %}
             <div class="info-row unavailable text-secondary">Weather unavailable</div>
             {% endif %}
+        </div>
+
+        <!-- Menu -->
+        <div class="cell cell-menu">
+            {% for menu in menus %}
+            <div class="menu-section">
+                <div class="text-label">{{ menu.label }}</div>
+                {% set names = menu.dishes | map(attribute='name') | list %}
+                <div class="menu-dishes">{{ names[0] }}{% for name in names[1:] %}, {{ name | lower }}{% endfor %}</div>
+            </div>
+            {% endfor %}
         </div>
 
         <!-- Electricity -->

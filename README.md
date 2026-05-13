@@ -20,6 +20,9 @@ app/renderer.py      — Playwright screenshot (default 1200×825)
 app/electricity.py   — spot-hinta.fi API + sparkline SVG pre-computation
 app/weather.py       — FMI WFS API (observations + Harmonie forecast)
 app/transport.py     — Digitransit GraphQL (HSL stops + departures)
+app/menu.py          — shared MenuDay/Dish dataclasses and cache helper
+app/menu_aromi.py    — Aromi (aromi.hel.fi) lunch fetcher — POST API, no auth required
+app/menu_amica.py    — Compass Group / Amica menu fetcher (scrapes __INITIAL_MENU__ from the restaurant page HTML)
 app/settings.py      — imports everything from settings_local.py
 app/templates/
   display.html       — single Jinja2 template, all CSS inline
@@ -82,6 +85,10 @@ Copy `app/settings_local.py` from `app/settings_local.sample.py` and fill in val
 - `DIGITRANSIT_API_KEY` — from portal-api.digitransit.fi
 - `HSL_STOPS` — list of `StopConfig(code, lines=None, walk_time_minutes=0)`
 - `API_TOKEN` — optional, required as `?token=` on all endpoints
+- `AMICA_URL` — Compass Group restaurant page URL; leave empty to disable (`menu_amica.py`)
+- `AROMI_URL` — full Aromi API endpoint URL (e.g. `https://aromi.hel.fi/.../api/Common/Restaurant/RestaurantMeals`); leave empty to disable
+- `AROMI_RESTAURANT_ID` — restaurant GUID from the Aromi URL
+- `AROMI_DINER_GROUP_ID` — diner group GUID (get from `GET /api/GetRestaurantPublicDinerGroups`)
 
 ## Deployment
 
