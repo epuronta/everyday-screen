@@ -1,3 +1,5 @@
+name: everyday-screen
+
 services:
   app:
     build:
