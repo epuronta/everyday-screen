@@ -4,3 +4,5 @@ __pycache__/
 latest_display.png
 deploy/.env
 app/settings_local.py
+.pytest_cache/
+.coverage
