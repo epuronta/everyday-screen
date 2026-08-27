@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Trimmed, synthetic stand-in for an FMI WFS timevaluepair response.
+     Structure matches the real thing; values are made up. -->
+<wfs:FeatureCollection
+    xmlns:wfs="http://www.opengis.net/wfs/2.0"
+    xmlns:omso="http://inspire.ec.europa.eu/schemas/omso/3.0"
+    xmlns:wml2="http://www.opengis.net/waterml/2.0"
+    xmlns:gml="http://www.opengis.net/gml/3.2">
+  <wfs:member>
+    <omso:PointTimeSeriesObservation gml:id="obs-1">
+      <omso:result>
+        <wml2:MeasurementTimeseries gml:id="obs-obs-1-1-temperature">
+          <wml2:point>
+            <wml2:MeasurementTVP>
+              <wml2:time>2026-08-27T06:00:00Z</wml2:time>
+              <wml2:value>15.3</wml2:value>
+            </wml2:MeasurementTVP>
+          </wml2:point>
+          <wml2:point>
+            <wml2:MeasurementTVP>
+              <wml2:time>2026-08-27T07:00:00Z</wml2:time>
+              <wml2:value>NaN</wml2:value>
+            </wml2:MeasurementTVP>
+          </wml2:point>
+          <wml2:point>
+            <wml2:MeasurementTVP>
+              <wml2:time>2026-08-27T08:00:00Z</wml2:time>
+              <wml2:value>17.1</wml2:value>
+            </wml2:MeasurementTVP>
+          </wml2:point>
+        </wml2:MeasurementTimeseries>
+      </omso:result>
+    </omso:PointTimeSeriesObservation>
+  </wfs:member>
+  <wfs:member>
+    <omso:PointTimeSeriesObservation gml:id="obs-2">
+      <omso:result>
+        <wml2:MeasurementTimeseries gml:id="obs-obs-1-1-windspeedms">
+          <wml2:point>
+            <wml2:MeasurementTVP>
+              <wml2:time>2026-08-27T06:00:00Z</wml2:time>
+              <wml2:value>4.5</wml2:value>
+            </wml2:MeasurementTVP>
+          </wml2:point>
+        </wml2:MeasurementTimeseries>
+      </omso:result>
+    </omso:PointTimeSeriesObservation>
+  </wfs:member>
+  <wfs:member>
+    <omso:PointTimeSeriesObservation gml:id="obs-3">
+      <omso:result>
+        <!-- Station reporting nothing usable: dropped entirely, not kept empty. -->
+        <wml2:MeasurementTimeseries gml:id="obs-obs-1-1-humidity">
+          <wml2:point>
+            <wml2:MeasurementTVP>
+              <wml2:time>2026-08-27T06:00:00Z</wml2:time>
+              <wml2:value>NaN</wml2:value>
+            </wml2:MeasurementTVP>
+          </wml2:point>
+        </wml2:MeasurementTimeseries>
+      </omso:result>
+    </omso:PointTimeSeriesObservation>
+  </wfs:member>
+</wfs:FeatureCollection>

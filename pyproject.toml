@@ -60,4 +60,5 @@ ignore = [
     "SLF001",  # tests exercise private helpers directly
     "INP001",  # tests/ is deliberately not a package
     "ANN001",  # fixture params don't need annotations
+    "PLR0913", # test data builders take a lot of keyword args on purpose
 ]
