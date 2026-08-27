@@ -96,7 +96,7 @@ Copy `app/settings_local.py` from `app/settings_local.sample.py` and fill in val
 - `AROMI_URL` — full Aromi API endpoint URL (e.g. `https://aromi.hel.fi/.../api/Common/Restaurant/RestaurantMeals`); leave empty to disable
 - `AROMI_RESTAURANT_ID` — restaurant GUID from the Aromi URL
 - `AROMI_DINER_GROUP_ID` — diner group GUID (get from `GET /api/GetRestaurantPublicDinerGroups`)
-- `REFRESH_OVERRIDE_SECONDS` — fixed refresh interval in seconds, bypassing the schedule; `0` uses the schedule. Set this on a dev instance so iterating doesn't mean waiting out a 10-minute band
+- `REFRESH_OVERRIDE_SECONDS` — fixed refresh interval in seconds, bypassing the schedule; `0` uses the schedule. Set this on a dev instance so iterating doesn't mean waiting out a 10-minute band. Clamped to 60–21600, the range the firmware accepts
 
 ## Refresh schedule
 
@@ -132,6 +132,14 @@ Two rules shape the returned value:
 
 Roughly 154 wakes/day, against 288 for the flat 5-minute interval this
 replaced.
+
+The firmware only honours values between 60s and 6h, falling back to a
+15-minute retry outside that range. The backend never emits outside it: the
+schedule's own floor is the same 60s, and `REFRESH_OVERRIDE_SECONDS` is clamped
+to the same window (with a warning at startup if you set something outside it).
+Without that clamp an override of 30s would be rejected on the device and become
+a 15-minute retry — making a dev instance slower rather than faster, while the
+footer still rendered the 30s that never happened.
 
 The optional `battery` query parameter is the device's raw voltage. It's
 rendered into the image footer alongside a percentage, so the number on screen
