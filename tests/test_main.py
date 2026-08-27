@@ -4,7 +4,14 @@ from datetime import UTC, date, datetime, timedelta
 
 import pytest
 
-from app.main import IMAGE_CACHE_TTL, _CacheEntry, _fi_date, _today_dishes
+from app import settings
+from app.main import (
+    IMAGE_CACHE_TTL,
+    _CacheEntry,
+    _fi_date,
+    _next_refresh_seconds,
+    _today_dishes,
+)
 from app.menu import Dish, MenuDay
 
 
@@ -101,3 +108,15 @@ def test_cache_entry_expires_exactly_at_the_ttl() -> None:
 def test_cache_entry_is_stale_after_the_ttl() -> None:
     entry = _CacheEntry(data=b"png", time=NOW)
     assert not entry.is_fresh(NOW + IMAGE_CACHE_TTL + timedelta(seconds=1))
+
+
+def test_next_refresh_seconds_follows_the_schedule(monkeypatch) -> None:
+    monkeypatch.setattr(settings, "REFRESH_OVERRIDE_SECONDS", 0)
+    # 04:00 UTC is 07:00 in Helsinki in August - the 3-minute morning band.
+    assert _next_refresh_seconds(datetime(2026, 8, 27, 4, 0, tzinfo=UTC)) == 180
+
+
+def test_next_refresh_seconds_honours_the_dev_override(monkeypatch) -> None:
+    """A dev instance shouldn't make you wait out a 10-minute band."""
+    monkeypatch.setattr(settings, "REFRESH_OVERRIDE_SECONDS", 60)
+    assert _next_refresh_seconds(datetime(2026, 8, 27, 12, 0, tzinfo=UTC)) == 60

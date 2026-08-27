@@ -18,6 +18,7 @@ from .electricity import get_electricity
 from .menu import Dish, MenuDay
 from .menu_amica import get_amica_menu
 from .menu_aromi import get_menu as get_aromi_menu
+from .refresh import MAX_INTERVAL, MIN_INTERVAL, next_refresh
 from .renderer import HEIGHT, WIDTH, render
 from .transport import DEPARTURE_CAP, DEPARTURE_LOOKAHEAD, get_transport
 from .weather import get_weather
@@ -57,6 +58,7 @@ def _fi_date(dt: datetime) -> str:
 
 @asynccontextmanager
 async def _lifespan(_app: FastAPI) -> AsyncGenerator[None]:
+    _warn_on_clamped_override()
     await renderer.startup()
     yield
     await renderer.shutdown()
@@ -210,13 +212,54 @@ async def read_display(
     )
 
 
+_MIN_SECONDS = int(MIN_INTERVAL.total_seconds())
+_MAX_SECONDS = int(MAX_INTERVAL.total_seconds())
+
+
+def _clamp_interval(seconds: int) -> int:
+    return min(max(seconds, _MIN_SECONDS), _MAX_SECONDS)
+
+
+def _warn_on_clamped_override() -> None:
+    configured = settings.REFRESH_OVERRIDE_SECONDS
+    if configured and configured != _clamp_interval(configured):
+        log.warning(
+            "REFRESH_OVERRIDE_SECONDS=%ss is outside the %ss-%ss the device "
+            "accepts; serving %ss instead",
+            configured,
+            _MIN_SECONDS,
+            _MAX_SECONDS,
+            _clamp_interval(configured),
+        )
+
+
+def _next_refresh_seconds(now: datetime) -> int:
+    """How long the device should sleep, as the device is told it.
+
+    The override exists so a dev instance can be iterated on without waiting
+    out a 10-minute band. Prod leaves it at 0.
+
+    It is clamped to the window the firmware will actually honour. Handing out
+    30s would get rejected on the device and fall back to a 15-minute retry,
+    making a dev instance slower rather than faster - while the footer happily
+    rendered the 30s that never happened.
+    """
+    if settings.REFRESH_OVERRIDE_SECONDS:
+        return _clamp_interval(settings.REFRESH_OVERRIDE_SECONDS)
+    return int(next_refresh(now, TZ).total_seconds())
+
+
 async def _render_display(width: int, height: int) -> Response:
     now = datetime.now(tz=UTC)
     cache_key = (width, height)
     entry = _image_cache.get(cache_key)
 
+    # Computed per request, never cached alongside the image - a cached image
+    # served late in a band must still hand out a current interval.
+    headers = {"X-Next-Refresh": str(_next_refresh_seconds(now))}
+
     if entry and entry.is_fresh(now):
-        return Response(content=entry.data, media_type="image/png")
+        return Response(content=entry.data, media_type="image/png", headers=headers)
 
     fetched = await _fetch_data(now)
     weather, electricity, transport, calendar, menu_amica, menu_aromi = fetched
@@ -236,7 +279,7 @@ async def _render_display(width: int, height: int) -> Response:
 
     _image_cache[cache_key] = _CacheEntry(data=image, time=now)
 
-    return Response(content=image, media_type="image/png")
+    return Response(content=image, media_type="image/png", headers=headers)
 
 
 @app.get("/display.png")

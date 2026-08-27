@@ -14,6 +14,11 @@ from zoneinfo import ZoneInfo
 # device for a two-second nap costs more than it saves.
 MIN_INTERVAL = timedelta(seconds=60)
 
+# The firmware rejects anything outside MIN_INTERVAL..MAX_INTERVAL outright and
+# falls back to a 15-minute retry, so nothing here may ever hand out a value
+# beyond this window - it would slow the device down rather than speed it up.
+MAX_INTERVAL = timedelta(hours=6)
+
 
 @dataclass(frozen=True)
 class Band:

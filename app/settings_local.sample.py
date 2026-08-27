@@ -35,3 +35,7 @@ AROMI_URL = ""
 AROMI_RESTAURANT_ID = ""
 AROMI_DINER_GROUP_ID = ""
 AROMI_LABEL = ""
+
+# Bypass the refresh schedule with a fixed interval in seconds, so a dev
+# instance doesn't make you wait out a 10-minute band. 0 = use the schedule.
+REFRESH_OVERRIDE_SECONDS = 0
