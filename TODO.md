@@ -58,6 +58,19 @@ out:
 - **`renderer.py`** — Playwright, slow, and a golden-image test would be brittle.
 - **Route-level tests** — would need the whole fetch layer stubbed.
 
+`tests/test_routes.py` is the exception: it stubs the fetch layer and the
+Playwright render to cover the one route-level thing worth asserting, that
+`/display.png` actually emits `X-Next-Refresh`. The rest of the route surface
+is still uncovered.
+
+## The Amica parser is less defensive than Aromi
+
+`menu_aromi._parse_days` guards every missing/null key it can meet; `_parse` in
+`menu_amica.py` indexes `day["menuPackages"]` and `p["meals"]` unguarded, so a
+shape change raises rather than degrading to "no menu today". The tests mirror
+that asymmetry, and the commit message that added them claimed both parsers got
+the same treatment — they didn't.
+
 ## Tests depend on a gitignored file
 
 Anything importing `app.main` needs `app/settings_local.py` to exist, which is
