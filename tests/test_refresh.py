@@ -97,6 +97,21 @@ def test_clamp_is_correct_on_the_fall_back_day() -> None:
     assert next_refresh(local, HELSINKI) == timedelta(minutes=15)
 
 
+# The two above pass against a DST-blind implementation too - nothing happens
+# between 05:45 and 06:00 on either transition day. These pin the offset itself:
+# both use the same UTC instant, and only the offset in force decides the band.
+def test_the_band_uses_the_offset_in_force_after_the_spring_forward() -> None:
+    """03:45 UTC is 06:45 EEST - it would read 05:45, and clamp, under EET."""
+    now = datetime(2026, 3, 29, 3, 45, tzinfo=UTC)
+    assert next_refresh(now, HELSINKI) == THREE_MIN
+
+
+def test_the_clamp_uses_the_offset_in_force_after_the_fall_back() -> None:
+    """03:45 UTC is 05:45 EET - it would read 06:45, and not clamp, under EEST."""
+    now = datetime(2026, 10, 25, 3, 45, tzinfo=UTC)
+    assert next_refresh(now, HELSINKI) == timedelta(minutes=15)
+
+
 def test_never_returns_a_non_positive_duration() -> None:
     """Every minute of the day, all year, produces a usable sleep."""
     start = datetime(2026, 1, 1, tzinfo=UTC)
