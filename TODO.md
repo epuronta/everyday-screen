@@ -14,20 +14,16 @@ measured voltage down and is a plausible reason a fully charged battery reports
 ~80%. Worth trying the read *before* `connectWiFi()` and comparing across a few
 wakes — needs the physical device, so it wasn't attempted.
 
-## A truncated PNG hangs the device forever
+## PNG decoding dominates the time the device is awake
 
-Switching to `drawPngFromWeb(stream, ...)` also switched which library
-download loop runs. The URL overload loops on
-`while (http.connected() && len > 0)`; the stream overload it uses now loops on
-`while (len > 0)` alone, with no connection check and no timeout. A response
-that reports a Content-Length and then stops short — WiFi drop, Traefik giving
-up mid-render — spins with the radio on until the battery is flat, rather than
-failing to the error screen and the 15-minute fallback.
+Measured on hardware: reading the ~98KB image takes 280–460ms, decoding it
+takes **~7.1s**. Of roughly 11s awake per wake, the pngle decode of a 1200×825
+PNG is most of it — so it, not the network, is what the battery is spent on.
 
-Not fixable from `main.cpp` without reimplementing the download and feeding
-pngle directly, since the library exposes no `drawPngFromBuffer`. A task
-watchdog around the fetch would turn the hang into a reboot loop, which is
-better but still not good. Needs a decision.
+The library also exposes `drawBitmapFromWeb`, and a raw bitmap needs no
+decoding at all. Serving BMP instead of PNG would trade bandwidth (and backend
+render changes) for a large cut in awake time. Worth measuring before
+committing to it, but 154 wakes/day × 7s is ~18 minutes of daily decode.
 
 ## No HTTP timeout is set on the fetch
 
