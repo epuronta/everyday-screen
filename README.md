@@ -8,7 +8,7 @@ The display device is a static e-ink screen that periodically fetches and shows 
 
 1. **FastAPI** serves an HTML template populated with live data
 2. On request, **Playwright** screenshots the rendered page into a PNG (cached for 1 minute)
-3. The display device polls `/display.png`
+3. The display device polls `/display.png`, and is told when to come back
 
 **The display side is dumb** — no logic, no state, just an image viewer. All computation (SVG paths, threshold positions, departure reachability) is pre-computed in Python and passed as plain values to the template. Keep it that way.
 
@@ -23,6 +23,7 @@ app/transport.py     — Digitransit GraphQL (HSL stops + departures)
 app/menu.py          — shared MenuDay/Dish dataclasses and cache helper
 app/menu_aromi.py    — Aromi (aromi.hel.fi) lunch fetcher — POST API, no auth required
 app/menu_amica.py    — Compass Group / Amica menu fetcher (scrapes __INITIAL_MENU__ from the restaurant page HTML)
+app/refresh.py       — decides how long the device should sleep before its next fetch
 app/settings.py      — imports everything from settings_local.py
 app/templates/
   display.html       — single Jinja2 template, all CSS inline
@@ -61,7 +62,7 @@ Two factors dominate legibility on this display:
 | `.text-primary` | Key info the user must read (line numbers, identifiers) | `--g0`, bold |
 | `.text-secondary` | Supporting info, readable but not primary (event times, headsigns) | `--g2` |
 | `.text-label` | Section separator labels (day names, period headers) — decorative | `--g2`, 0.85rem |
-| `.text-ghost` | Status text where invisibility at distance is acceptable | `--g3`, 0.9rem |
+| `.text-ghost` | Footer status line — smaller than body text, still legible | `--g2`, 0.9rem |
 
 Default body text (inheriting `--g0`) needs no class. SVG text uses `fill` not `color` — set `fill` values directly.
 
@@ -72,7 +73,13 @@ make up          # start uvicorn on :8000 with live reload (aliases: start, run)
 make screenshot  # save latest_display.png from the running server
 make lint        # ruff check + format --check
 make fix         # ruff autofix + format
+make test        # pytest
+make test-cov    # pytest with a term-missing coverage report
 ```
+
+Tests cover the pure logic — parsers, geometry, the refresh schedule. The
+network fetchers, their module-level caches and the Playwright render are
+deliberately untested; see `TODO.md`.
 
 There's also a `/` route that serves the raw HTML — useful for inspecting layout without going through the PNG render.
 
@@ -89,6 +96,48 @@ Copy `app/settings_local.py` from `app/settings_local.sample.py` and fill in val
 - `AROMI_URL` — full Aromi API endpoint URL (e.g. `https://aromi.hel.fi/.../api/Common/Restaurant/RestaurantMeals`); leave empty to disable
 - `AROMI_RESTAURANT_ID` — restaurant GUID from the Aromi URL
 - `AROMI_DINER_GROUP_ID` — diner group GUID (get from `GET /api/GetRestaurantPublicDinerGroups`)
+- `REFRESH_OVERRIDE_SECONDS` — fixed refresh interval in seconds, bypassing the schedule; `0` uses the schedule. Set this on a dev instance so iterating doesn't mean waiting out a 10-minute band
+
+## Refresh schedule
+
+The device has no opinion about how often to wake up. Every `/display.png`
+response carries an `X-Next-Refresh` header holding the number of seconds the
+device should sleep before asking again:
+
+```
+GET /display.png?token=...&battery=3.72
+200 OK
+Content-Type: image/png
+X-Next-Refresh: 180
+```
+
+It rides on the image response rather than sitting behind its own endpoint,
+because a second request per wake means a second connection and TLS handshake —
+a real share of the awake-radio time the schedule exists to reduce.
+
+Bands are local wall-clock and identical every day (`app/refresh.py`):
+
+| Local time | Interval |
+|---|---|
+| 06:00–09:00 | 3 min |
+| 09:00–22:00 | 10 min |
+| 22:00–06:00 | 30 min |
+
+Two rules shape the returned value:
+
+- **Clamped to the next band edge**, so a wake never overshoots into the
+  following band. Without it, 05:45 sleeps its full 30 minutes and misses the
+  first quarter of the morning cadence.
+- **Floored at 60s**, because clamping can land arbitrarily close to an edge.
+
+Roughly 154 wakes/day, against 288 for the flat 5-minute interval this
+replaced.
+
+The optional `battery` query parameter is the device's raw voltage. It's
+rendered into the image footer alongside a percentage, so the number on screen
+comes from the same wake that reported it. The percentage uses a linear
+3.0–4.2 V map and is known to read low — a full battery reports well under
+100% — which is why the raw voltage is shown next to it.
 
 ## Deployment
 
