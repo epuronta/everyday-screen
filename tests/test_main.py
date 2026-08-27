@@ -7,8 +7,10 @@ import pytest
 from app import settings
 from app.main import (
     IMAGE_CACHE_TTL,
+    _battery_label,
     _CacheEntry,
     _fi_date,
+    _interval_label,
     _next_refresh_seconds,
     _today_dishes,
 )
@@ -120,3 +122,39 @@ def test_next_refresh_seconds_honours_the_dev_override(monkeypatch) -> None:
     """A dev instance shouldn't make you wait out a 10-minute band."""
     monkeypatch.setattr(settings, "REFRESH_OVERRIDE_SECONDS", 60)
     assert _next_refresh_seconds(datetime(2026, 8, 27, 12, 0, tzinfo=UTC)) == 60
+
+
+@pytest.mark.parametrize(
+    ("voltage", "expected"),
+    [
+        (4.2, "4.20 V (100 %)"),
+        (3.9, "3.90 V (75 %)"),
+        (3.6, "3.60 V (50 %)"),
+        (3.01, "3.01 V (1 %)"),
+        (4.5, "4.50 V (100 %)"),
+    ],
+)
+def test_battery_label_pairs_voltage_with_a_percentage(
+    voltage: float, expected: str
+) -> None:
+    """The percentage is known to read low, so the raw voltage rides along."""
+    assert _battery_label(voltage) == expected
+
+
+def test_battery_label_reports_usb_power() -> None:
+    """readBattery() returns near zero off the battery, same as the firmware did."""
+    assert _battery_label(3.0) == "USB"
+    assert _battery_label(0.0) == "USB"
+
+
+def test_battery_label_is_empty_when_not_reported() -> None:
+    """Browsers and `make screenshot` don't send one."""
+    assert _battery_label(None) == ""
+
+
+@pytest.mark.parametrize(
+    ("seconds", "expected"),
+    [(180, "3 min"), (600, "10 min"), (1800, "30 min"), (60, "1 min"), (30, "30 s")],
+)
+def test_interval_label(seconds: int, expected: str) -> None:
+    assert _interval_label(seconds) == expected

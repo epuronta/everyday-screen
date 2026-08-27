@@ -241,7 +241,7 @@
             {% endif %}
         </div>
 
-        <div class="footer text-ghost">Refreshed {{ time }}</div>
+        <div class="footer text-ghost">Refreshed {{ time }}{% if refresh_label %} &middot; {{ refresh_label }}{% endif %}{% if battery_label %} &middot; {{ battery_label }}{% endif %}</div>
     </div>
 </body>
 </html>

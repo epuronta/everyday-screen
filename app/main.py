@@ -56,6 +56,33 @@ def _fi_date(dt: datetime) -> str:
     return f"{_FI_WEEKDAYS[dt.weekday()].capitalize()} {dt.day}.{dt.month}. ({month})"
 
 
+# Matches the range the firmware used when it drew this itself. The reading is
+# known to be pessimistic - a full battery reports well under 100% - so the
+# voltage is shown alongside the percentage rather than instead of it, which is
+# what makes recalibrating this possible later.
+_BATTERY_MIN_V = 3.0
+_BATTERY_MAX_V = 4.2
+
+
+def _battery_label(voltage: float | None) -> str:
+    if voltage is None:
+        return ""
+    if voltage <= _BATTERY_MIN_V:
+        return "USB"
+    ratio = (voltage - _BATTERY_MIN_V) / (_BATTERY_MAX_V - _BATTERY_MIN_V)
+    percent = min(100, max(0, round(ratio * 100)))
+    return f"{voltage:.2f} V ({percent} %)"
+
+
+_SECONDS_PER_MINUTE = 60
+
+
+def _interval_label(seconds: int) -> str:
+    if seconds < _SECONDS_PER_MINUTE:
+        return f"{seconds} s"
+    return f"{round(seconds / _SECONDS_PER_MINUTE)} min"
+
+
 @asynccontextmanager
 async def _lifespan(_app: FastAPI) -> AsyncGenerator[None]:
     _warn_on_clamped_override()
@@ -85,7 +112,11 @@ class _CacheEntry:
         return now - self.time < IMAGE_CACHE_TTL
 
 
-_image_cache: dict[tuple[int, int], _CacheEntry] = {}
+# (width, height, reported voltage, refresh seconds) - everything the rendered
+# image varies with. Kept in step with the key built in _render_display.
+_CacheKey = tuple[int, int, float | None, int]
+
+_image_cache: dict[_CacheKey, _CacheEntry] = {}
 
 
 TZ = ZoneInfo(settings.TIMEZONE)
@@ -114,6 +145,8 @@ def _build_context(  # noqa: PLR0913
     menu_aromi: list[MenuDay] | None,
     width: int,
     height: int,
+    refresh_label: str,
+    battery_label: str,
 ) -> dict:
     local = now.astimezone(TZ)
     today = local.date()
@@ -139,6 +172,8 @@ def _build_context(  # noqa: PLR0913
         "departure_lookahead": DEPARTURE_LOOKAHEAD,
         "width": width,
         "height": height,
+        "refresh_label": refresh_label,
+        "battery_label": battery_label,
     }
 
 
@@ -190,6 +225,7 @@ async def read_display(
     width: Annotated[int, Query()] = WIDTH,
     height: Annotated[int, Query()] = HEIGHT,
     use_mock_weather: Annotated[bool, Query(alias="mock_weather")] = False,  # noqa: FBT002
+    battery: Annotated[float | None, Query()] = None,
     _: Annotated[None, Depends(_require_token)] = None,
 ):
     now = datetime.now(tz=UTC)
@@ -208,6 +244,8 @@ async def read_display(
             menu_aromi,
             width,
             height,
+            _interval_label(_next_refresh_seconds(now)),
+            _battery_label(battery),
         ),
     )
 
@@ -249,14 +287,20 @@ def _next_refresh_seconds(now: datetime) -> int:
     return int(next_refresh(now, TZ).total_seconds())
 
 
-async def _render_display(width: int, height: int) -> Response:
+async def _render_display(
+    width: int, height: int, battery: float | None = None
+) -> Response:
     now = datetime.now(tz=UTC)
-    cache_key = (width, height)
-    entry = _image_cache.get(cache_key)
 
     # Computed per request, never cached alongside the image - a cached image
     # served late in a band must still hand out a current interval.
-    headers = {"X-Next-Refresh": str(_next_refresh_seconds(now))}
+    seconds = _next_refresh_seconds(now)
+    headers = {"X-Next-Refresh": str(seconds)}
+
+    # Both the interval and the voltage are rendered into the image, so they
+    # have to be part of its identity or a hit serves someone else's numbers.
+    cache_key = (width, height, battery, seconds)
+    entry = _image_cache.get(cache_key)
 
     if entry and entry.is_fresh(now):
         return Response(content=entry.data, media_type="image/png", headers=headers)
@@ -273,10 +317,16 @@ async def _render_display(width: int, height: int) -> Response:
         menu_aromi,
         width,
         height,
+        _interval_label(seconds),
+        _battery_label(battery),
     )
     html = templates.env.get_template("display.html").render(ctx)
     image = await render(html, width, height)
 
+    # The key now varies with the reported voltage, so entries would otherwise
+    # accumulate one per distinct reading and never be reclaimed.
+    for stale in [k for k, v in _image_cache.items() if not v.is_fresh(now)]:
+        del _image_cache[stale]
     _image_cache[cache_key] = _CacheEntry(data=image, time=now)
 
     return Response(content=image, media_type="image/png", headers=headers)
@@ -286,9 +336,10 @@ async def _render_display(width: int, height: int) -> Response:
 async def get_display_png(
     width: Annotated[int, Query()] = WIDTH,
     height: Annotated[int, Query()] = HEIGHT,
+    battery: Annotated[float | None, Query()] = None,
     _: Annotated[None, Depends(_require_token)] = None,
 ):
-    return await _render_display(width, height)
+    return await _render_display(width, height, battery)
 
 
 if __name__ == "__main__":
