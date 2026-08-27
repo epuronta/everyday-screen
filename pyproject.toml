@@ -44,6 +44,13 @@ ignore = [
     "ANN201", # missing return type annotation
     "T201",   # print statements
     "COM812", # conflicts with ruff formatter
+    # FIXME comments are used deliberately to mark known-but-unfixed behaviour
+    # (usually alongside a test that encodes it). There's no issue tracker to
+    # link to and one author, so the bookkeeping rules are noise.
+    "TD001",  # FIXME is not an accepted tag
+    "TD002",  # missing author
+    "TD003",  # missing issue link
+    "FIX001", # line contains FIXME
 ]
 
 [tool.ruff.lint.per-file-ignores]
