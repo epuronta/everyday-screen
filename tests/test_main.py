@@ -152,6 +152,12 @@ def test_battery_label_is_empty_when_not_reported() -> None:
     assert _battery_label(None) == ""
 
 
+@pytest.mark.parametrize("raw", ["nan", "inf", "1e400"])
+def test_battery_label_is_empty_for_a_non_finite_reading(raw: str) -> None:
+    """FastAPI parses these into a float happily; round() would then raise."""
+    assert _battery_label(float(raw)) == ""
+
+
 @pytest.mark.parametrize(
     ("seconds", "expected"),
     [(180, "3 min"), (600, "10 min"), (1800, "30 min"), (60, "1 min"), (30, "30 s")],

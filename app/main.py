@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import math
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
@@ -65,7 +66,9 @@ _BATTERY_MAX_V = 4.2
 
 
 def _battery_label(voltage: float | None) -> str:
-    if voltage is None:
+    # A nan/inf reading would blow up on round() further down and take the whole
+    # image with it. Dropping the label degrades to the pre-battery footer.
+    if voltage is None or not math.isfinite(voltage):
         return ""
     if voltage <= _BATTERY_MIN_V:
         return "USB"
