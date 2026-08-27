@@ -1,4 +1,4 @@
-.PHONY: install run up start lint lint-file fix screenshot deploy
+.PHONY: install run up start lint lint-file fix test test-cov screenshot deploy
 
 install:
 	uv sync --all-groups
@@ -29,3 +29,9 @@ lint-file:
 fix:
 	uv run ruff check --fix .
 	uv run ruff format .
+
+test:
+	uv run pytest
+
+test-cov:
+	uv run pytest --cov --cov-report=term-missing

@@ -17,8 +17,18 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pre-commit>=4.5.1",
+    "pytest>=8.4",
+    "pytest-cov>=6",
     "ruff>=0.15.7",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# app/ is imported as a package from the repo root; the project isn't installed.
+pythonpath = ["."]
+
+[tool.coverage.run]
+source = ["app"]
 
 [tool.ruff.lint]
 select = ["ALL"]
@@ -34,4 +44,13 @@ ignore = [
     "ANN201", # missing return type annotation
     "T201",   # print statements
     "COM812", # conflicts with ruff formatter
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = [
+    "S101",    # assert is the point of a test
+    "PLR2004", # magic values are the expected values
+    "SLF001",  # tests exercise private helpers directly
+    "INP001",  # tests/ is deliberately not a package
+    "ANN001",  # fixture params don't need annotations
 ]
