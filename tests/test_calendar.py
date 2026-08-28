@@ -201,7 +201,23 @@ def test_prepare_display_groups_events_under_a_day_label() -> None:
     groups = prepare_display(events, NOW, HELSINKI, FI_WEEKDAYS)
     assert [g.label for g in groups] == ["Tänään", "Huomenna"]
     assert [e.title for e in groups[0].events] == ["Aamu", "Iltapäivä"]
-    assert [e.time_label for e in groups[0].events] == ["09:00", "14:00"]
+    assert [e.time_label for e in groups[0].events] == ["09:00-10:00", "14:00-15:00"]
+
+
+def test_prepare_display_drops_the_end_time_when_the_event_ends_another_day() -> None:
+    """A date next to the end time would not fit the column."""
+    events = [_event("Reissu", datetime(2026, 8, 27, 22, 0, tzinfo=HELSINKI), hours=5)]
+    groups = prepare_display(events, NOW, HELSINKI, FI_WEEKDAYS)
+    assert groups[0].events[0].time_label == "22:00"
+
+
+def test_prepare_display_drops_the_end_time_for_zero_length_events() -> None:
+    """Feeds that omit DTEND parse as start == end."""
+    events = [
+        _event("Muistutus", datetime(2026, 8, 27, 9, 0, tzinfo=HELSINKI), hours=0)
+    ]
+    groups = prepare_display(events, NOW, HELSINKI, FI_WEEKDAYS)
+    assert groups[0].events[0].time_label == "09:00"
 
 
 def test_prepare_display_leaves_all_day_events_without_a_time() -> None:

@@ -169,6 +169,22 @@ def _day_label(d: date, today: date, fi_weekdays: list[str]) -> str:
     return f"{fi_weekdays[d.weekday()].capitalize()} {d.day}.{d.month}."
 
 
+def _time_label(event: CalendarEvent, tz: ZoneInfo) -> str:
+    if event.all_day:
+        return ""
+
+    start = event.start.astimezone(tz)
+    label = start.strftime("%H:%M")
+
+    end = event.end.astimezone(tz)
+    # A cross-day end would need a date next to it, which does not fit the
+    # column. Zero-length events come from feeds that omit DTEND.
+    if end <= start or end.date() != start.date():
+        return label
+
+    return f"{label}-{end.strftime('%H:%M')}"
+
+
 def prepare_display(
     events: list[CalendarEvent],
     now: datetime,
@@ -187,9 +203,7 @@ def prepare_display(
         if not groups or groups[-1].label != label:
             groups.append(CalendarDayGroup(label=label, events=[]))
 
-        time_label = (
-            "" if event.all_day else event.start.astimezone(tz).strftime("%H:%M")
-        )
+        time_label = _time_label(event, tz)
         groups[-1].events.append(
             CalendarEventDisplay(time_label=time_label, title=event.title)
         )
