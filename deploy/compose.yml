@@ -6,6 +6,11 @@ services:
       context: ..
       dockerfile: deploy/Dockerfile
     restart: unless-stopped
+    # Ceiling for a traffic spike, not a sizing target: the bundled headless
+    # Chromium peaks around 476 MB on prod under ordinary traffic, so a tighter
+    # limit would OOM-kill it in normal operation.
+    mem_limit: 768m
+    cpus: '1.0'
     labels:
       # Opt into Traefik routing — without this Traefik ignores the container
       - "traefik.enable=true"
