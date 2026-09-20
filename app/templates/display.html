@@ -92,7 +92,7 @@
         .text-primary   { color: var(--g0); font-weight: bold; }
         .text-secondary { color: var(--g2); }
         .text-label     { color: var(--g2); font-size: 0.85rem; }
-        .text-ghost     { color: var(--g2); font-size: 0.9rem; }
+        .text-status    { color: var(--g0); font-size: 1rem; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -241,7 +241,7 @@
             {% endif %}
         </div>
 
-        <div class="footer text-ghost">Refreshed {{ time }}{% if refresh_label %} &middot; {{ refresh_label }}{% endif %}{% if battery_label %} &middot; {{ battery_label }}{% endif %}</div>
+        <div class="footer text-status">Refreshed {{ time }}{% if refresh_label %} &middot; {{ refresh_label }}{% endif %}{% if battery_label %} &middot; {{ battery_label }}{% endif %}</div>
     </div>
 </body>
 </html>
