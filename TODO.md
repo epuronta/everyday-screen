@@ -39,11 +39,19 @@ image — but the 1-minute TTL now only ever helps the browser and
 `make screenshot`. If burst protection matters, the fix is to quantise the
 voltage into the key rather than to drop it.
 
-## The what-to-wear cell is empty
+## Clothing rules ignore the precipitation type
 
-`.cell-wear` reserves the bottom-left 140px row, but nothing renders into it —
-the menu move was about making the space, not filling it. Until something lands
-there the left column just ends early.
+`app/clothing.py` infers rain vs snow from the air temperature alone, though
+`ForecastHour.symbol` says outright which it is. Wet snow and freezing rain at
++1°C both read as ordinary rain, and those are exactly the days where the shell
+matters most. Raised during the feature and left undecided.
+
+## FeelsLike counts sunshine the kids may not be standing in
+
+FMI's `FeelsLike` folds in solar radiation, so a calm sunny -5°C morning reports
+around -2°C. A kid waiting at a shaded bus stop gets the -5. `WindChill` comes
+from the same query and is the conservative alternative if the guide ever reads
+too optimistic in winter.
 
 ## README claims 5 departures per stop
 

@@ -15,6 +15,7 @@ from fastapi.templating import Jinja2Templates
 
 from . import renderer, settings
 from .calendar import get_calendar, prepare_display
+from .clothing import advice as clothing_advice
 from .electricity import get_electricity
 from .menu import Dish, MenuDay
 from .menu_amica import get_amica_menu
@@ -153,6 +154,7 @@ def _build_context(  # noqa: PLR0913
 ) -> dict:
     local = now.astimezone(TZ)
     today = local.date()
+    outdoor = weather.outdoor_day(TZ, now) if weather else None
     menus = []
     if dishes := _today_dishes(menu_aromi, today):
         menus.append({"label": settings.AROMI_LABEL, "dishes": dishes})
@@ -168,6 +170,12 @@ def _build_context(  # noqa: PLR0913
         if calendar
         else [],
         "menus": menus,
+        "clothing": {
+            "label": "Vaatetus" if outdoor.label == "Tänään" else "Vaatetus huomenna",
+            "text": clothing_advice(outdoor),
+        }
+        if outdoor
+        else None,
         "now": now,
         "tz": TZ,
         "timedelta": timedelta,

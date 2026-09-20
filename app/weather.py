@@ -169,6 +169,29 @@ def _worst_icon(hours: list[ForecastHour]) -> str:
     return min(hours, key=lambda h: _ICON_PRIORITY.get(h.icon, 5)).icon
 
 
+# The hours the kids are out of the house with no chance to change clothes.
+_OUTDOOR_START_H = 8
+_OUTDOOR_END_H = 16
+_WET_HOUR_MM = 0.1  # below this an hour is damp, not wet
+
+
+@dataclass
+class OutdoorDay:
+    """The outdoor day as the person standing in it meets it.
+
+    Every field is the worst the window has to offer rather than an average:
+    they dress once, in the hallway, for all of it.
+    """
+
+    label: str  # "Tänään" / "Huomenna"
+    feels_min: float  # °C, felt
+    feels_max: float  # °C, felt
+    air_min: float  # °C, actual: decides snow vs rain and whether it thaws
+    air_max: float  # °C, actual
+    rain_total: float  # mm across the window
+    wet_hours: int  # hours with measurable precipitation
+
+
 @dataclass
 class WeatherData:
     current: CurrentWeather
@@ -228,6 +251,36 @@ class WeatherData:
             "height": height,
             "chart_h": chart_h,
         }
+
+    def outdoor_day(self, tz: ZoneInfo, now: datetime) -> OutdoorDay | None:
+        local = now.astimezone(tz)
+        # Once the window has passed there is nothing left to dress for today,
+        # so it moves on to the morning they will actually get up to.
+        if local.hour >= _OUTDOOR_END_H:
+            target, label = local.date() + timedelta(days=1), "Huomenna"
+        else:
+            target, label = local.date(), "Tänään"
+
+        hours = [
+            f
+            for f in self.forecast
+            if f.time.astimezone(tz).date() == target
+            and _OUTDOOR_START_H <= f.time.astimezone(tz).hour < _OUTDOOR_END_H
+        ]
+        if not hours:
+            return None
+
+        felt = [f.felt for f in hours]
+        air = [f.temperature for f in hours]
+        return OutdoorDay(
+            label=label,
+            feels_min=min(felt),
+            feels_max=max(felt),
+            air_min=min(air),
+            air_max=max(air),
+            rain_total=sum(f.precipitation for f in hours),
+            wet_hours=sum(1 for f in hours if f.precipitation >= _WET_HOUR_MM),
+        )
 
     def day_groups(self, tz: ZoneInfo, now: datetime) -> list[WeatherDay]:
         local_now = now.astimezone(tz)

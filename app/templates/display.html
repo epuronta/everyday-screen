@@ -85,6 +85,8 @@
         .departure.unreachable .text-primary { color: var(--g3); }
         .unavailable { font-size: 1.6rem; }
 
+        .clothing-advice { font-size: 1.5rem; font-weight: 600; line-height: 1.35; margin-top: 0.2rem; }
+
         .menu-section + .menu-section { margin-top: 0.5rem; }
         .menu-dishes { font-size: 1.2rem; }
 
@@ -155,7 +157,12 @@
         </div>
 
         <!-- What to wear -->
-        <div class="cell cell-wear"></div>
+        <div class="cell cell-wear">
+            {% if clothing %}
+            <div class="text-label">{{ clothing.label }}</div>
+            <div class="clothing-advice">{{ clothing.text }}</div>
+            {% endif %}
+        </div>
 
         <!-- Electricity -->
         <div class="cell cell-electricity">

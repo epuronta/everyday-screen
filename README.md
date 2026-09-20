@@ -20,6 +20,7 @@ app/renderer.py      — Playwright screenshot (default 1200×825)
 app/electricity.py   — spot-hinta.fi API + sparkline SVG pre-computation
 app/weather.py       — FMI WFS API (observations + Harmonie forecast)
 app/transport.py     — Digitransit GraphQL (HSL stops + departures)
+app/clothing.py      — turns the 08-16 forecast window into one line of what to wear
 app/menu.py          — shared MenuDay/Dish dataclasses and cache helper
 app/menu_aromi.py    — Aromi (aromi.hel.fi) lunch fetcher — POST API, no auth required
 app/menu_amica.py    — Compass Group / Amica menu fetcher (scrapes __INITIAL_MENU__ from the restaurant page HTML)
@@ -39,9 +40,20 @@ Each data module has its own in-memory cache: weather 10 min, electricity 1 h, t
 **Layout.** CSS grid, 2 columns:
 - Top-left: clock/date
 - Left: weather — day blocks (Aamu 06–12, Ilta 12–20) with icons and temp range, plus hourly precipitation chart (stacked boxes, 1/mm, capped at 5mm), labels in Finnish
-- Bottom-left (`.cell-wear`): reserved for what-to-wear instructions, empty for now
+- Bottom-left: what to wear, one line for the hours the kids are out
 - Right: calendar events, then today's lunch menus, then transport departures (greyed out if unreachable given walk time)
 - Bottom full-width: electricity sparkline
+
+**What to wear.** Covers 08-16, the stretch the kids are out with no chance to
+change, so every input is the worst the window offers rather than an average.
+Three independent choices compose the line: rain picks the outer layer and
+brings the shell trousers, felt temperature picks what goes underneath and the
+jacket on dry days, wet ground picks the shoes. After 16:00 the window rolls to
+tomorrow, since today's is over.
+
+Felt temperature (`FeelsLike`) drives the clothing; air temperature decides
+whether precipitation is rain or snow and whether the yard thaws. The two
+disagree most on a sunny, calm, sub-zero morning.
 
 **Electricity sparkline.** 48h fixed window (today 00:00 → tomorrow 23:00). Y-axis runs 0 → max price rounded up to next 10c, with grid lines every 10c. `CHEAP_THRESHOLD` / `EXPENSIVE_THRESHOLD` are only used for `classify()` (the icon next to the current price), not for chart lines.
 
