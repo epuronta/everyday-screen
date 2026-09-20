@@ -50,6 +50,8 @@ async def mock_weather(now: datetime, tz: ZoneInfo) -> WeatherData:
                 ),
                 symbol=symbol,
                 precipitation=precip[h],
+                # Wind and damp make it read colder than the air almost always.
+                feels_like=round(temp - random.uniform(0, 4), 1),
             )
         )
     return WeatherData(

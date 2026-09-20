@@ -126,17 +126,22 @@ class ForecastHour:
     wind_speed: float  # m/s
     symbol: WeatherSymbol
     precipitation: float = 0.0  # mm
+    feels_like: float | None = None  # °C, FMI's "tuntuu kuin"; None when absent
     icon: str = field(init=False)
 
     def __post_init__(self) -> None:
         self.icon = _symbol_to_icon(self.symbol)
 
+    @property
+    def felt(self) -> float:
+        return self.temperature if self.feels_like is None else self.feels_like
+
 
 @dataclass
 class WeatherBlock:
     label: str  # "Aamu" / "Ilta"
-    temp_min: float  # °C
-    temp_max: float  # °C
+    feels_min: float  # °C, felt
+    feels_max: float  # °C, felt
     icon: str  # worst-case condition in the block
     wind_speed_max: float  # m/s, peak in block
     empty: bool = False  # placeholder when period has passed with no data
@@ -241,20 +246,20 @@ class WeatherData:
             if not in_range:
                 return None
             icon = _worst_icon(in_range)
-            temps = [f.temperature for f in in_range]
+            felt = [f.felt for f in in_range]
             wind_max = max(f.wind_speed for f in in_range)
             return WeatherBlock(
                 label=label,
-                temp_min=min(temps),
-                temp_max=max(temps),
+                feels_min=min(felt),
+                feels_max=max(felt),
                 icon=icon,
                 wind_speed_max=wind_max,
             )
 
         _placeholder = WeatherBlock(
             label="Aamu",
-            temp_min=0,
-            temp_max=0,
+            feels_min=0,
+            feels_max=0,
             icon="cloudy",
             wind_speed_max=0,
             empty=True,
@@ -353,7 +358,9 @@ async def get_weather(place: str) -> WeatherData:
                 "starttime": start_of_today.strftime("%Y-%m-%dT%H:%M:%SZ"),
                 "endtime": end_of_day.strftime("%Y-%m-%dT%H:%M:%SZ"),
                 "timestep": "60",
-                "parameters": "Temperature,WindSpeedMS,WeatherSymbol3,Precipitation1h",
+                "parameters": (
+                    "Temperature,WindSpeedMS,WeatherSymbol3,Precipitation1h,FeelsLike"
+                ),
             },
         )
         fct_resp.raise_for_status()
@@ -371,6 +378,7 @@ async def get_weather(place: str) -> WeatherData:
     winds = dict(fct.get("WindSpeedMS", []))
     symbols = dict(fct.get("WeatherSymbol3", []))
     precips = dict(fct.get("Precipitation1h", []))
+    feels = dict(fct.get("FeelsLike", []))
 
     forecast = [
         ForecastHour(
@@ -379,6 +387,7 @@ async def get_weather(place: str) -> WeatherData:
             wind_speed=winds[t],
             symbol=WeatherSymbol(int(symbols[t])),
             precipitation=precips.get(t, 0.0),
+            feels_like=feels.get(t),
         )
         for t, v in sorted(temps.items())
         if t in winds and t in symbols

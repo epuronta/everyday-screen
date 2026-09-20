@@ -30,6 +30,7 @@ def _hour(
     wind: float = 2.0,
     symbol: WeatherSymbol = WeatherSymbol.CLEAR,
     precip: float = 0.0,
+    feels: float | None = None,
     day: date = TODAY,
 ) -> ForecastHour:
     return ForecastHour(
@@ -38,6 +39,7 @@ def _hour(
         wind_speed=wind,
         symbol=symbol,
         precipitation=precip,
+        feels_like=feels,
     )
 
 
@@ -93,9 +95,23 @@ def test_worst_icon_of_nothing_is_cloudy() -> None:
 )
 def test_wind_level_thresholds(wind: float, level: int) -> None:
     block = WeatherBlock(
-        label="Aamu", temp_min=10, temp_max=15, icon="clear", wind_speed_max=wind
+        label="Aamu", feels_min=10, feels_max=15, icon="clear", wind_speed_max=wind
     )
     assert block.wind_level == level
+
+
+def test_felt_temperature_falls_back_to_the_air_temperature() -> None:
+    assert _hour(9, temp=3.0).felt == 3.0
+    assert _hour(9, temp=3.0, feels=-1.4).felt == -1.4
+
+
+def test_day_blocks_report_felt_temperatures_not_air() -> None:
+    data = _data(
+        _hour(7, temp=10.0, feels=6.0),
+        _hour(11, temp=14.0, feels=11.5),
+    )
+    aamu = data.day_groups(HELSINKI, NOW)[0].blocks[0]
+    assert (aamu.feels_min, aamu.feels_max) == (6.0, 11.5)
 
 
 def test_current_icon_comes_from_the_first_forecast_hour() -> None:
@@ -117,9 +133,9 @@ def test_day_groups_splits_morning_and_evening() -> None:
     days = data.day_groups(HELSINKI, NOW)
     assert [d.label for d in days] == ["Tänään"]
     aamu, ilta = days[0].blocks
-    assert (aamu.label, aamu.temp_min, aamu.temp_max) == ("Aamu", 10.0, 14.0)
+    assert (aamu.label, aamu.feels_min, aamu.feels_max) == ("Aamu", 10.0, 14.0)
     assert aamu.wind_speed_max == 5.0
-    assert (ilta.label, ilta.temp_min, ilta.temp_max) == ("Ilta", 16.0, 18.0)
+    assert (ilta.label, ilta.feels_min, ilta.feels_max) == ("Ilta", 16.0, 18.0)
     assert ilta.wind_level == 3
 
 
