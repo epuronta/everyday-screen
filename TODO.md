@@ -39,6 +39,12 @@ image — but the 1-minute TTL now only ever helps the browser and
 `make screenshot`. If burst protection matters, the fix is to quantise the
 voltage into the key rather than to drop it.
 
+## The what-to-wear cell is empty
+
+`.cell-wear` reserves the bottom-left 140px row, but nothing renders into it —
+the menu move was about making the space, not filling it. Until something lands
+there the left column just ends early.
+
 ## README claims 5 departures per stop
 
 `DEPARTURE_CAP` is 4. Pre-dates the refresh work; one of the two is wrong.

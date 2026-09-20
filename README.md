@@ -38,8 +38,9 @@ Each data module has its own in-memory cache: weather 10 min, electricity 1 h, t
 
 **Layout.** CSS grid, 2 columns:
 - Top-left: clock/date
-- Bottom-left: weather — day blocks (Aamu 06–12, Ilta 12–20) with icons and temp range, plus hourly precipitation chart (stacked boxes, 1/mm, capped at 5mm), labels in Finnish
-- Right: transport departures (up to 5 per stop, greyed out if unreachable given walk time)
+- Left: weather — day blocks (Aamu 06–12, Ilta 12–20) with icons and temp range, plus hourly precipitation chart (stacked boxes, 1/mm, capped at 5mm), labels in Finnish
+- Bottom-left (`.cell-wear`): reserved for what-to-wear instructions, empty for now
+- Right: calendar events, then today's lunch menus, then transport departures (greyed out if unreachable given walk time)
 - Bottom full-width: electricity sparkline
 
 **Electricity sparkline.** 48h fixed window (today 00:00 → tomorrow 23:00). Y-axis runs 0 → max price rounded up to next 10c, with grid lines every 10c. `CHEAP_THRESHOLD` / `EXPENSIVE_THRESHOLD` are only used for `classify()` (the icon next to the current price), not for chart lines.

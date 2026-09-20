@@ -36,7 +36,7 @@
             grid-template-rows: 1fr 140px 220px;
             grid-template-areas:
                 "weather      right"
-                "menu         right"
+                "wear         right"
                 "electricity  electricity";
         }
         .cell {
@@ -46,7 +46,7 @@
             justify-content: flex-start;
         }
         .cell-weather       { grid-area: weather; border-right: 2px solid var(--g0); }
-        .cell-menu          { grid-area: menu; border-right: 2px solid var(--g0); border-top: 1.5px solid var(--g4); overflow: hidden; }
+        .cell-wear          { grid-area: wear; border-right: 2px solid var(--g0); border-top: 1.5px solid var(--g4); overflow: hidden; }
         .cell-right         { grid-area: right; }
         .cell-electricity   { grid-area: electricity; border-top: 2px solid var(--g0); }
 
@@ -154,16 +154,8 @@
             {% endif %}
         </div>
 
-        <!-- Menu -->
-        <div class="cell cell-menu">
-            {% for menu in menus %}
-            <div class="menu-section">
-                <div class="text-label">{{ menu.label }}</div>
-                {% set names = menu.dishes | map(attribute='name') | list %}
-                <div class="menu-dishes">{{ names[0] }}{% for name in names[1:] %}, {{ name | lower }}{% endfor %}</div>
-            </div>
-            {% endfor %}
-        </div>
+        <!-- What to wear -->
+        <div class="cell cell-wear"></div>
 
         <!-- Electricity -->
         <div class="cell cell-electricity">
@@ -199,7 +191,7 @@
             {% endif %}
         </div>
 
-        <!-- Right: calendar + transport -->
+        <!-- Right: calendar + menu + transport -->
         <div class="cell cell-right">
             {% if calendar %}
             <div class="calendar-events">
@@ -214,7 +206,17 @@
                 {% endfor %}
             </div>
             {% endif %}
-            {% if calendar and transport %}
+            {% if calendar and menus %}
+            <hr class="section-divider">
+            {% endif %}
+            {% for menu in menus %}
+            <div class="menu-section">
+                <div class="text-label">{{ menu.label }}</div>
+                {% set names = menu.dishes | map(attribute='name') | list %}
+                <div class="menu-dishes">{{ names[0] }}{% for name in names[1:] %}, {{ name | lower }}{% endfor %}</div>
+            </div>
+            {% endfor %}
+            {% if (calendar or menus) and transport %}
             <hr class="section-divider">
             {% endif %}
             {% if transport %}
