@@ -7,7 +7,6 @@ from zoneinfo import ZoneInfo
 import pytest
 
 from app.weather import (
-    CurrentWeather,
     ForecastHour,
     WeatherBlock,
     WeatherData,
@@ -44,10 +43,7 @@ def _hour(
 
 
 def _data(*hours: ForecastHour) -> WeatherData:
-    return WeatherData(
-        current=CurrentWeather(temperature=15.0, wind_speed=2.0, humidity=60.0),
-        forecast=list(hours),
-    )
+    return WeatherData(forecast=list(hours))
 
 
 @pytest.mark.parametrize(
@@ -112,15 +108,6 @@ def test_day_blocks_report_felt_temperatures_not_air() -> None:
     )
     aamu = data.day_groups(HELSINKI, NOW)[0].blocks[0]
     assert (aamu.feels_min, aamu.feels_max) == (6.0, 11.5)
-
-
-def test_current_icon_comes_from_the_first_forecast_hour() -> None:
-    data = _data(_hour(9, symbol=WeatherSymbol.SNOW_HEAVY), _hour(10))
-    assert data.current_icon == "snow-3"
-
-
-def test_current_icon_without_a_forecast_is_cloudy() -> None:
-    assert _data().current_icon == "cloudy"
 
 
 def test_day_groups_splits_morning_and_evening() -> None:
@@ -234,3 +221,68 @@ def test_parse_timeseries_omits_series_with_no_usable_points() -> None:
     """An all-NaN series is absent rather than present-and-empty."""
     xml_text = (FIXTURES / "fmi_timevaluepair.xml").read_text(encoding="utf-8")
     assert "humidity" not in _parse_timeseries(xml_text)
+
+
+TOMORROW = TODAY + timedelta(days=1)
+
+
+@pytest.mark.parametrize(
+    ("hour", "label", "target"),
+    [
+        (0, "Tänään", TODAY),
+        (7, "Tänään", TODAY),
+        (15, "Tänään", TODAY),
+        (16, "Huomenna", TOMORROW),
+        (23, "Huomenna", TOMORROW),
+    ],
+)
+def test_the_outdoor_window_rolls_over_when_the_day_is_out_of_reach(
+    hour: int, label: str, target: date
+) -> None:
+    # Marking the target day warmer is what proves which day got picked.
+    data = _data(
+        *(_hour(h, day=TODAY, feels=1.0) for h in range(24)),
+        *(_hour(h, day=TOMORROW, feels=2.0) for h in range(24)),
+    )
+    now = datetime(TODAY.year, TODAY.month, TODAY.day, hour, tzinfo=HELSINKI)
+    window = data.outdoor_day(HELSINKI, now)
+    assert window is not None
+    assert window.label == label
+    assert window.feels_min == (1.0 if target == TODAY else 2.0)
+
+
+def test_the_window_covers_eight_to_four_only() -> None:
+    data = _data(
+        _hour(7, feels=-40.0),  # before they leave
+        _hour(8, feels=1.0),
+        _hour(15, feels=5.0),
+        _hour(16, feels=40.0),  # after they are home
+    )
+    window = data.outdoor_day(HELSINKI, NOW)
+    assert window is not None
+    assert (window.feels_min, window.feels_max) == (1.0, 5.0)
+
+
+def test_the_window_keeps_air_and_felt_temperatures_apart() -> None:
+    data = _data(_hour(9, temp=1.0, feels=-4.0), _hour(12, temp=6.0, feels=2.0))
+    window = data.outdoor_day(HELSINKI, NOW)
+    assert window is not None
+    assert (window.feels_min, window.feels_max) == (-4.0, 2.0)
+    assert (window.air_min, window.air_max) == (1.0, 6.0)
+
+
+def test_only_hours_with_measurable_rain_count_as_wet() -> None:
+    data = _data(
+        _hour(9, precip=0.0),
+        _hour(10, precip=0.05),  # a rounding artefact, not weather
+        _hour(11, precip=0.1),
+        _hour(12, precip=2.4),
+    )
+    window = data.outdoor_day(HELSINKI, NOW)
+    assert window is not None
+    assert window.wet_hours == 2
+    assert window.rain_total == pytest.approx(2.55)
+
+
+def test_no_forecast_for_the_window_means_no_advice() -> None:
+    assert _data(_hour(7), _hour(17)).outdoor_day(HELSINKI, NOW) is None

@@ -15,15 +15,7 @@ _WIND_HIGH_MS = 8  # m/s threshold for high wind
 _TZ = ZoneInfo(settings.TIMEZONE)
 CACHE_TTL = timedelta(minutes=10)
 
-_OBS_QUERY = "fmi::observations::weather::timevaluepair"
 _FCT_QUERY = "fmi::forecast::harmonie::surface::point::timevaluepair"
-
-
-@dataclass
-class CurrentWeather:
-    temperature: float  # °C
-    wind_speed: float  # m/s
-    humidity: float  # %
 
 
 # Lower value = worse condition (for worst-case outfit planning)
@@ -194,12 +186,7 @@ class OutdoorDay:
 
 @dataclass
 class WeatherData:
-    current: CurrentWeather
     forecast: list[ForecastHour]
-
-    @property
-    def current_icon(self) -> str:
-        return self.forecast[0].icon if self.forecast else "cloudy"
 
     def rain_chart(self, d: date, tz: ZoneInfo, width: int = 300) -> dict:
         """Pre-compute SVG stacked-box chart: 1 box per mm of precipitation."""
@@ -383,20 +370,6 @@ async def get_weather(place: str) -> WeatherData:
     end_of_day = (now + timedelta(days=1)).replace(hour=23, minute=59, second=59)
 
     async with httpx.AsyncClient() as client:
-        obs_resp = await client.get(
-            WFS_URL,
-            params={
-                "service": "WFS",
-                "version": "2.0.0",
-                "request": "GetFeature",
-                "storedquery_id": _OBS_QUERY,
-                "place": place,
-                "timestep": "60",
-                "parameters": "t2m,ws_10min,rh",
-            },
-        )
-        obs_resp.raise_for_status()
-
         start_of_today = (
             now.astimezone(_TZ).replace(hour=0, minute=0, second=0).astimezone(UTC)
         )
@@ -418,14 +391,7 @@ async def get_weather(place: str) -> WeatherData:
         )
         fct_resp.raise_for_status()
 
-    obs = _parse_timeseries(obs_resp.text)
     fct = _parse_timeseries(fct_resp.text)
-
-    current = CurrentWeather(
-        temperature=obs["t2m"][-1][1],
-        wind_speed=obs["ws_10min"][-1][1],
-        humidity=obs["rh"][-1][1],
-    )
 
     temps = dict(fct.get("Temperature", []))
     winds = dict(fct.get("WindSpeedMS", []))
@@ -446,7 +412,7 @@ async def get_weather(place: str) -> WeatherData:
         if t in winds and t in symbols
     ]
 
-    _cache.data = WeatherData(current=current, forecast=forecast)
+    _cache.data = WeatherData(forecast=forecast)
     _cache.time = now
 
     return _cache.data

@@ -3,7 +3,7 @@ import random
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from .weather import CurrentWeather, ForecastHour, WeatherData, WeatherSymbol
+from .weather import ForecastHour, WeatherData, WeatherSymbol
 
 _RAIN_CHANCE = 0.2
 _HEAVY_RAIN = 4.0
@@ -54,9 +54,4 @@ async def mock_weather(now: datetime, tz: ZoneInfo) -> WeatherData:
                 feels_like=round(temp - random.uniform(0, 4), 1),
             )
         )
-    return WeatherData(
-        current=CurrentWeather(
-            temperature=forecast[0].temperature, wind_speed=3.0, humidity=80.0
-        ),
-        forecast=forecast,
-    )
+    return WeatherData(forecast=forecast)
