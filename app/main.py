@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import logging
 import math
 from collections.abc import AsyncGenerator
@@ -23,7 +24,7 @@ from .menu_aromi import get_menu as get_aromi_menu
 from .refresh import MAX_INTERVAL, MIN_INTERVAL, next_refresh
 from .renderer import HEIGHT, WIDTH, render
 from .transport import DEPARTURE_CAP, DEPARTURE_LOOKAHEAD, get_transport
-from .weather import get_weather
+from .weather import WeatherData, get_weather
 from .weather_mock import mock_weather
 
 log = logging.getLogger(__name__)
@@ -104,6 +105,21 @@ def _require_token(token: Annotated[str, Query()] = "") -> None:
 
 
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
+
+
+def _font_face_css() -> str:
+    # Inlined because the renderer loads the page with set_content, which has no
+    # origin to fetch a file from. Bundled at all so a local render wraps and
+    # overflows exactly like the server's.
+    font = Path(__file__).parent / "templates" / "fonts" / "Inter.woff2"
+    data = base64.b64encode(font.read_bytes()).decode()
+    return (
+        "@font-face { font-family: 'Inter'; font-weight: 100 900; "
+        f"src: url(data:font/woff2;base64,{data}) format('woff2'); }}"
+    )
+
+
+_FONT_FACE_CSS = _font_face_css()
 IMAGE_CACHE_TTL = timedelta(minutes=1)
 
 
@@ -139,6 +155,13 @@ def _today_dishes(days: list[MenuDay] | None, today: date) -> list[Dish] | None:
     return None
 
 
+def _clothing_by_day(weather: WeatherData, now: datetime) -> dict[date, str]:
+    today = now.astimezone(TZ).date()
+    days = (today, today + timedelta(days=1))
+    outdoor = {d: weather.outdoor_day(d, TZ, now) for d in days}
+    return {d: clothing_advice(o) for d, o in outdoor.items() if o}
+
+
 def _build_context(  # noqa: PLR0913
     now: datetime,
     weather: object,
@@ -154,7 +177,6 @@ def _build_context(  # noqa: PLR0913
 ) -> dict:
     local = now.astimezone(TZ)
     today = local.date()
-    outdoor = weather.outdoor_day(TZ, now) if weather else None
     menus = []
     if dishes := _today_dishes(menu_aromi, today):
         menus.append({"label": settings.AROMI_LABEL, "dishes": dishes})
@@ -170,17 +192,13 @@ def _build_context(  # noqa: PLR0913
         if calendar
         else [],
         "menus": menus,
-        "clothing": {
-            "label": "Vaatetus" if outdoor.label == "Tänään" else "Vaatetus huomenna",
-            "text": clothing_advice(outdoor),
-        }
-        if outdoor
-        else None,
+        "clothing": _clothing_by_day(weather, now) if weather else {},
         "now": now,
         "tz": TZ,
         "timedelta": timedelta,
         "departure_cap": DEPARTURE_CAP,
         "departure_lookahead": DEPARTURE_LOOKAHEAD,
+        "font_face_css": _FONT_FACE_CSS,
         "width": width,
         "height": height,
         "refresh_label": refresh_label,

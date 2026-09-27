@@ -20,7 +20,7 @@ app/renderer.py      — Playwright screenshot (default 1200×825)
 app/electricity.py   — spot-hinta.fi API + sparkline SVG pre-computation
 app/weather.py       — FMI WFS API (Harmonie forecast)
 app/transport.py     — Digitransit GraphQL (HSL stops + departures)
-app/clothing.py      — turns the 08-16 forecast window into one line of what to wear
+app/clothing.py      — turns a day's 08-16 forecast window into one line of what to wear
 app/menu.py          — shared MenuDay/Dish dataclasses and cache helper
 app/menu_aromi.py    — Aromi (aromi.hel.fi) lunch fetcher — POST API, no auth required
 app/menu_amica.py    — Compass Group / Amica menu fetcher (scrapes __INITIAL_MENU__ from the restaurant page HTML)
@@ -39,8 +39,7 @@ Each data module has its own in-memory cache: weather 10 min, electricity 1 h, t
 
 **Layout.** CSS grid, 2 columns:
 - Top-left: clock/date
-- Left: weather — day blocks (Aamu 06–12, Ilta 12–20) with icons and temp range, plus hourly precipitation chart (stacked boxes, 1/mm, capped at 5mm), labels in Finnish
-- Bottom-left: what to wear, one line for the hours the kids are out
+- Left: weather per day — blocks (Aamu 06–12, Ilta 12–20) with icons and temp range, an hourly precipitation chart (stacked boxes, 1/mm, capped at 5mm), and what to wear that day. Labels in Finnish
 - Right: calendar events, then today's lunch menus, then transport departures (greyed out if unreachable given walk time)
 - Bottom full-width: electricity sparkline
 
@@ -48,8 +47,8 @@ Each data module has its own in-memory cache: weather 10 min, electricity 1 h, t
 change, so every input is the worst the window offers rather than an average.
 Three independent choices compose the line: rain picks the outer layer and
 brings the shell trousers, felt temperature picks what goes underneath and the
-jacket on dry days, wet ground picks the shoes. After 16:00 the window rolls to
-tomorrow, since today's is over.
+jacket on dry days, wet ground picks the shoes. Each weather day gets its own
+line, and today's drops off at 16:00 once there is nothing left to dress for.
 
 Felt temperature (`FeelsLike`) drives the clothing; air temperature decides
 whether precipitation is rain or snow and whether the yard thaws. The two
@@ -60,6 +59,8 @@ disagree most on a sunny, calm, sub-zero morning.
 ## E-ink legibility
 
 The physical display looks significantly different from a browser preview. Light grays that read fine in the browser become marginal or invisible on e-ink. `make screenshot` is not a reliable proxy — when in doubt, check against the device.
+
+**Font.** Inter (variable, Latin subset from [Fontsource](https://fontsource.org/fonts/inter)), bundled under `app/templates/fonts/` and inlined into the page, so a local render wraps exactly like the server's. Body text sits at weight 500, a notch above regular, since thin strokes fade on the panel. Tabular figures are scoped to the time and temperature columns: Inter's `tnum` also fixes the hyphen's width, which spaces out ordinary words.
 
 Two factors dominate legibility on this display:
 
@@ -74,8 +75,9 @@ Two factors dominate legibility on this display:
 |---|---|---|
 | `.text-primary` | Key info the user must read (line numbers, identifiers) | `--g0`, bold |
 | `.text-secondary` | Supporting info, readable but not primary (event times, headsigns) | `--g2` |
-| `.text-label` | Section separator labels (day names, period headers) — decorative | `--g2`, 0.85rem |
-| `.text-ghost` | Footer status line — smaller than body text, still legible | `--g2`, 0.9rem |
+| `.text-heading` | Day names that group the content under them | `--g0`, 1.1rem |
+| `.text-label` | Small headers (Aamu/Ilta, chart and menu names) | `--g0`, 0.95rem |
+| `.text-status` | Footer status line | `--g0`, 1rem |
 
 Default body text (inheriting `--g0`) needs no class. SVG text uses `fill` not `color` — set `fill` values directly.
 

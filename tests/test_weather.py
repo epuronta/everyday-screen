@@ -189,6 +189,30 @@ def test_rain_chart_labels_the_ends_of_each_wet_stretch() -> None:
     assert labels == ["9", "11", "15"]
 
 
+def test_rain_chart_labels_a_two_hour_stretch_once() -> None:
+    data = _data(_hour(12, precip=1.0), _hour(13, precip=1.0))
+    labels = [lbl["label"] for lbl in data.rain_chart(TODAY, HELSINKI)["labels"]]
+    assert labels == ["12"]
+
+
+@pytest.mark.parametrize(
+    ("wet_hours", "axis"),
+    [
+        ((), ["6", "12", "18"]),
+        ((9,), ["6", "12", "18"]),
+        ((10,), ["6", "18"]),  # "10" would print over "12"
+        ((13,), ["6", "18"]),
+        ((14,), ["6", "12", "18"]),
+    ],
+)
+def test_rain_chart_axis_labels_give_way_to_rain_labels(
+    wet_hours: tuple[int, ...], axis: list[str]
+) -> None:
+    data = _data(*(_hour(h, precip=1.0) for h in wet_hours))
+    chart = data.rain_chart(TODAY, HELSINKI)
+    assert [lbl["label"] for lbl in chart["axis_labels"]] == axis
+
+
 def test_rain_chart_has_a_fixed_geometry() -> None:
     chart = _data(_hour(9, precip=1.0)).rain_chart(TODAY, HELSINKI)
     assert chart["y_max"] == 5
@@ -227,28 +251,30 @@ TOMORROW = TODAY + timedelta(days=1)
 
 
 @pytest.mark.parametrize(
-    ("hour", "label", "target"),
+    ("day", "hour", "has_window"),
     [
-        (0, "Tänään", TODAY),
-        (7, "Tänään", TODAY),
-        (15, "Tänään", TODAY),
-        (16, "Huomenna", TOMORROW),
-        (23, "Huomenna", TOMORROW),
+        (TODAY, 0, True),
+        (TODAY, 15, True),
+        (TODAY, 16, False),  # they are home, nothing left to dress for
+        (TOMORROW, 23, True),
     ],
 )
-def test_the_outdoor_window_rolls_over_when_the_day_is_out_of_reach(
-    hour: int, label: str, target: date
+def test_the_window_is_gone_once_the_day_is_out_of_reach(
+    day: date, hour: int, *, has_window: bool
 ) -> None:
-    # Marking the target day warmer is what proves which day got picked.
+    data = _data(*(_hour(h, day=day) for h in range(24)))
+    now = datetime(TODAY.year, TODAY.month, TODAY.day, hour, tzinfo=HELSINKI)
+    assert (data.outdoor_day(day, HELSINKI, now) is not None) == has_window
+
+
+def test_the_window_covers_the_requested_day_only() -> None:
     data = _data(
         *(_hour(h, day=TODAY, feels=1.0) for h in range(24)),
         *(_hour(h, day=TOMORROW, feels=2.0) for h in range(24)),
     )
-    now = datetime(TODAY.year, TODAY.month, TODAY.day, hour, tzinfo=HELSINKI)
-    window = data.outdoor_day(HELSINKI, now)
+    window = data.outdoor_day(TOMORROW, HELSINKI, NOW)
     assert window is not None
-    assert window.label == label
-    assert window.feels_min == (1.0 if target == TODAY else 2.0)
+    assert window.feels_min == 2.0
 
 
 def test_the_window_covers_eight_to_four_only() -> None:
@@ -258,14 +284,14 @@ def test_the_window_covers_eight_to_four_only() -> None:
         _hour(15, feels=5.0),
         _hour(16, feels=40.0),  # after they are home
     )
-    window = data.outdoor_day(HELSINKI, NOW)
+    window = data.outdoor_day(TODAY, HELSINKI, NOW)
     assert window is not None
     assert (window.feels_min, window.feels_max) == (1.0, 5.0)
 
 
 def test_the_window_keeps_air_and_felt_temperatures_apart() -> None:
     data = _data(_hour(9, temp=1.0, feels=-4.0), _hour(12, temp=6.0, feels=2.0))
-    window = data.outdoor_day(HELSINKI, NOW)
+    window = data.outdoor_day(TODAY, HELSINKI, NOW)
     assert window is not None
     assert (window.feels_min, window.feels_max) == (-4.0, 2.0)
     assert (window.air_min, window.air_max) == (1.0, 6.0)
@@ -278,11 +304,11 @@ def test_only_hours_with_measurable_rain_count_as_wet() -> None:
         _hour(11, precip=0.1),
         _hour(12, precip=2.4),
     )
-    window = data.outdoor_day(HELSINKI, NOW)
+    window = data.outdoor_day(TODAY, HELSINKI, NOW)
     assert window is not None
     assert window.wet_hours == 2
     assert window.rain_total == pytest.approx(2.55)
 
 
 def test_no_forecast_for_the_window_means_no_advice() -> None:
-    assert _data(_hour(7), _hour(17)).outdoor_day(HELSINKI, NOW) is None
+    assert _data(_hour(7), _hour(17)).outdoor_day(TODAY, HELSINKI, NOW) is None

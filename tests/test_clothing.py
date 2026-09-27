@@ -20,7 +20,6 @@ def _day(
     wet_hours: int = 0,
 ) -> OutdoorDay:
     return OutdoorDay(
-        label="Tänään",
         feels_min=feels_min,
         feels_max=feels_max if feels_max is not None else feels_min + 3.0,
         air_min=air_min if air_min is not None else feels_min + 2.0,
@@ -71,53 +70,51 @@ def test_snow_is_left_to_the_winter_layers() -> None:
     line = advice(snowy)
     assert line.startswith("Toppatakki ja -housut")
     assert "kuori" not in line.lower()
-    assert line.endswith("talvikengät.")
+    assert line.endswith("talvikengät")
 
 
 def test_a_long_wet_day_calls_for_rubber_boots() -> None:
     assert advice(_day(feels_min=8.0, rain_total=6.0, wet_hours=6)).endswith(
-        "kumpparit."
+        "kumpparit"
     )
 
 
 def test_one_downpour_is_not_enough_for_rubber_boots() -> None:
     assert advice(_day(feels_min=8.0, rain_total=8.0, wet_hours=2)).endswith(
-        "gore-kengät."
+        "gore-kengät"
     )
 
 
 def test_all_day_drizzle_is_not_enough_either() -> None:
     assert advice(_day(feels_min=8.0, rain_total=2.4, wet_hours=6)).endswith(
-        "gore-kengät."
+        "gore-kengät"
     )
 
 
 def test_a_thaw_calls_for_rubber_boots_even_without_rain() -> None:
     # Frost at eight, above zero by noon: the yard is slush by the time they
     # come home, whatever the sky does.
-    assert advice(_day(feels_min=-3.0, air_min=-4.0, air_max=4.0)).endswith(
-        "kumpparit."
-    )
+    assert advice(_day(feels_min=-3.0, air_min=-4.0, air_max=4.0)).endswith("kumpparit")
 
 
 def test_a_dry_hot_day_ends_in_sandals() -> None:
-    assert advice(_day(feels_min=24.0)).endswith("sandaalit tai lenkkarit.")
+    assert advice(_day(feels_min=24.0)).endswith("sandaalit tai lenkkarit")
 
 
 @pytest.mark.parametrize(
     ("feels_min", "shoes"),
     [
-        (11.9, "gore-kengät."),
+        (11.9, "gore-kengät"),
         # Inclusive on purpose: the jacket runs to 18, the gore-tex does not.
-        (12.0, "gore-kengät."),
-        (12.1, "lenkkarit."),
+        (12.0, "gore-kengät"),
+        (12.1, "lenkkarit"),
     ],
 )
 def test_gore_tex_ends_at_the_shoulder_threshold(feels_min: float, shoes: str) -> None:
     assert advice(_day(feels_min=feels_min)).endswith(shoes)
 
 
-def test_the_line_reads_as_a_sentence() -> None:
+def test_the_line_reads_as_a_list() -> None:
     assert advice(_day(feels_min=9.0)) == (
-        "Kuoritakki, pitkähihainen, pipo tai lippis, gore-kengät."
+        "Kuoritakki, pitkähihainen, pipo tai lippis, gore-kengät"
     )

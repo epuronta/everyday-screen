@@ -1,7 +1,7 @@
 import math
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, date, datetime, time, timedelta
 from enum import IntEnum
 from zoneinfo import ZoneInfo
 
@@ -175,7 +175,6 @@ class OutdoorDay:
     they dress once, in the hallway, for all of it.
     """
 
-    label: str  # "Tänään" / "Huomenna"
     feels_min: float  # °C, felt
     feels_max: float  # °C, felt
     air_min: float  # °C, actual: decides snow vs rain and whether it thaws
@@ -220,38 +219,45 @@ class WeatherData:
         for h in range(24):
             if h in rainy and (h == 0 or h - 1 not in rainy):
                 label_hours.add(h)  # rain sequence starts
-            if h in rainy and h + 1 not in rainy:
+            # Two digits overflow a bar, so a two-hour stretch keeps its start only
+            if h in rainy and h + 1 not in rainy and h - 1 not in label_hours:
                 label_hours.add(h)  # last wet hour in sequence
         labels = [
             {"x": round(h * bar_w + bar_w / 2, 1), "label": str(h)}
             for h in sorted(label_hours)
         ]
 
-        grid_lines = [round(h * bar_w, 1) for h in range(1, 24)]
+        # Full lines only every six hours: 23 of them drown out the rain.
+        grid_lines = [
+            {"x": round(h * bar_w, 1), "major": h % 6 == 0} for h in range(1, 24)
+        ]
+        # A rain label within two bars of a major line would print over it.
+        axis_labels = [
+            {"x": round(h * bar_w, 1), "label": str(h)}
+            for h in (6, 12, 18)
+            if not label_hours & set(range(h - 2, h + 2))
+        ]
 
         return {
             "boxes": boxes,
             "labels": labels,
             "grid_lines": grid_lines,
+            "axis_labels": axis_labels,
             "y_max": y_max,
             "width": width,
             "height": height,
             "chart_h": chart_h,
         }
 
-    def outdoor_day(self, tz: ZoneInfo, now: datetime) -> OutdoorDay | None:
-        local = now.astimezone(tz)
-        # Once the window has passed there is nothing left to dress for today,
-        # so it moves on to the morning they will actually get up to.
-        if local.hour >= _OUTDOOR_END_H:
-            target, label = local.date() + timedelta(days=1), "Huomenna"
-        else:
-            target, label = local.date(), "Tänään"
+    def outdoor_day(self, d: date, tz: ZoneInfo, now: datetime) -> OutdoorDay | None:
+        # Once the window has passed there is nothing left to dress for.
+        if now.astimezone(tz) >= datetime.combine(d, time(_OUTDOOR_END_H), tz):
+            return None
 
         hours = [
             f
             for f in self.forecast
-            if f.time.astimezone(tz).date() == target
+            if f.time.astimezone(tz).date() == d
             and _OUTDOOR_START_H <= f.time.astimezone(tz).hour < _OUTDOOR_END_H
         ]
         if not hours:
@@ -260,7 +266,6 @@ class WeatherData:
         felt = [f.felt for f in hours]
         air = [f.temperature for f in hours]
         return OutdoorDay(
-            label=label,
             feels_min=min(felt),
             feels_max=max(felt),
             air_min=min(air),

@@ -89,4 +89,4 @@ def advice(day: OutdoorDay) -> str:
         _shoes(day, wet=wet),
     ]
     line = ", ".join(p for p in parts if p)
-    return line[0].upper() + line[1:] + "."
+    return line[0].upper() + line[1:]

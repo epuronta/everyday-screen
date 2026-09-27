@@ -182,7 +182,7 @@ def _time_label(event: CalendarEvent, tz: ZoneInfo) -> str:
     if end <= start or end.date() != start.date():
         return label
 
-    return f"{label}-{end.strftime('%H:%M')}"
+    return f"{label} - {end.strftime('%H:%M')}"
 
 
 def prepare_display(

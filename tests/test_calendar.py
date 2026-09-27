@@ -201,7 +201,10 @@ def test_prepare_display_groups_events_under_a_day_label() -> None:
     groups = prepare_display(events, NOW, HELSINKI, FI_WEEKDAYS)
     assert [g.label for g in groups] == ["Tänään", "Huomenna"]
     assert [e.title for e in groups[0].events] == ["Aamu", "Iltapäivä"]
-    assert [e.time_label for e in groups[0].events] == ["09:00-10:00", "14:00-15:00"]
+    assert [e.time_label for e in groups[0].events] == [
+        "09:00 - 10:00",
+        "14:00 - 15:00",
+    ]
 
 
 def test_prepare_display_drops_the_end_time_when_the_event_ends_another_day() -> None:
