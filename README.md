@@ -18,7 +18,7 @@ The display device is a static e-ink screen that periodically fetches and shows 
 app/main.py          — FastAPI app, routes, parallel data fetching
 app/renderer.py      — Playwright screenshot (default 1200×825)
 app/electricity.py   — spot-hinta.fi API + sparkline SVG pre-computation
-app/weather.py       — FMI WFS API (observations + Harmonie forecast)
+app/weather.py       — FMI WFS API (Harmonie forecast)
 app/transport.py     — Digitransit GraphQL (HSL stops + departures)
 app/clothing.py      — turns the 08-16 forecast window into one line of what to wear
 app/menu.py          — shared MenuDay/Dish dataclasses and cache helper

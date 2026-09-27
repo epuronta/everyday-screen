@@ -7,7 +7,6 @@ from zoneinfo import ZoneInfo
 import pytest
 
 from app.weather import (
-    CurrentWeather,
     ForecastHour,
     WeatherBlock,
     WeatherData,
@@ -44,10 +43,7 @@ def _hour(
 
 
 def _data(*hours: ForecastHour) -> WeatherData:
-    return WeatherData(
-        current=CurrentWeather(temperature=15.0, wind_speed=2.0, humidity=60.0),
-        forecast=list(hours),
-    )
+    return WeatherData(forecast=list(hours))
 
 
 @pytest.mark.parametrize(
@@ -112,15 +108,6 @@ def test_day_blocks_report_felt_temperatures_not_air() -> None:
     )
     aamu = data.day_groups(HELSINKI, NOW)[0].blocks[0]
     assert (aamu.feels_min, aamu.feels_max) == (6.0, 11.5)
-
-
-def test_current_icon_comes_from_the_first_forecast_hour() -> None:
-    data = _data(_hour(9, symbol=WeatherSymbol.SNOW_HEAVY), _hour(10))
-    assert data.current_icon == "snow-3"
-
-
-def test_current_icon_without_a_forecast_is_cloudy() -> None:
-    assert _data().current_icon == "cloudy"
 
 
 def test_day_groups_splits_morning_and_evening() -> None:
